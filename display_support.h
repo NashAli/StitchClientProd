@@ -6,7 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  
+
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -32,9 +32,18 @@
   0x21 - MCP23017 - Aux Controller
   0x3C - OLED - used
   0x68 - MPU6050 - Head motion detect.
-
+  ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
 
+  Modes:
+  0 - 1/1
+  1 - 1/2
+  2 - 1/4
+  3 - 1/8   (not used)
+  4 - 1/16  (not used)
+  5 - 1/32  (not used)
+
+  Subject to change, without notice!
 
 */
 
@@ -77,8 +86,8 @@ void InitDisplay() {
 }
 
 /*
- * 
- */
+
+*/
 void DrawBanner() {
   display1.clearDisplay();
   display1.drawRect(0, 0, 127, 63, WHITE);
@@ -86,10 +95,23 @@ void DrawBanner() {
   display1.print(OSNAME);
   display1.display();
 }
-
 /*
- * 
- */
+   Limits display
+*/
+void ShowLimits() {
+  DrawBanner();
+  display1.setCursor(30, 20);
+  display1.print("X Y X Y N N");
+  display1.setCursor(30, 30);
+  display1.print("H H M M U D");
+  display1.setCursor(30, 40);
+  //read the limits and display results.
+  display1.print("x x x x x x");
+  display1.display();
+}
+/*
+
+*/
 void ShowPosition() {
   DrawBanner();
   display1.setCursor(20, 20);
@@ -120,7 +142,7 @@ void ShowWifi() {
   display1.print("RSSI: ");
   display1.println(WiFi.RSSI());
   display1.display();
-  delay(3000);
+  delay(1000);
 }
 
 
@@ -128,7 +150,7 @@ void ShowWifi() {
 /*
   Diagnostics use - do not use
 
-void ShowAccel() {
+  void ShowAccel() {
   sensors_event_t a, g;
   mpu.getEvent(&a, &g);
   display1.println("Accelerometer - m/s^2");
@@ -146,7 +168,7 @@ void ShowAccel() {
   display1.print(g.gyro.z, 1);
   display1.println("");
   display1.display();
-}
+  }
 */
 
 

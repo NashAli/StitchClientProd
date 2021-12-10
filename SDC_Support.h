@@ -32,10 +32,10 @@
   0x21 - MCP23017 - Aux Controller
   0x3C - OLED - used
   0x68 - MPU6050 - Head motion detect.
-
+  ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
 
-
+Subject to change, without notice!
 */
 
 // SD Card
@@ -117,7 +117,7 @@ void InitializeSDCard(int cs)
     display1.print(freeSpace);
     display1.print(" MB");
     display1.display();
-    delay(5000);
+    delay(1000);
   }
   SD.end();
 }
@@ -153,6 +153,8 @@ void printDirectory(File dir, int numTabs)
   }
   delay(1000);
 }
+
+
 
 
 void StopSDCard()

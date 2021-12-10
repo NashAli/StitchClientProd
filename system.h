@@ -6,7 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
- 
+
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -32,10 +32,18 @@
   0x21 - MCP23017 - Aux Controller
   0x3C - OLED - used
   0x68 - MPU6050 - Head motion detect.
-
+  ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
 
+  Modes:
+  0 - 1/1
+  1 - 1/2
+  2 - 1/4
+  3 - 1/8   (not used)
+  4 - 1/16  (not used)
+  5 - 1/32  (not used)
 
+  Subject to change, without notice!
 */
 
 
@@ -62,7 +70,7 @@
 #define DEFVALB   0x07  // Default value for port B
 #define INTCONA   0x08  // Interrupt control register for port A
 #define INTCONB   0x09  // Interrupt control register for port B
-//#define IOCON     0x0A  // Configuration register //conflict with library macro
+//#define IOCON     0x0A  // Configuration register //conflict with library macro??
 #define GPPUA     0x0C  // Pull-up resistors for port A
 #define GPPUB     0x0D  // Pull-up resistors for port B
 #define INTFA     0x0E  // Interrupt condition for port A
@@ -73,8 +81,9 @@
 #define GPIOB     0x13  // Data port B
 #define OLATA     0x14  // Output latches A - all limit sw. - X,Y,Needle Position
 #define OLATB     0x15  // Output latches B  - stepper motor controllers
+
 //MCP23017 - MOTOR_CONTROLLER @ 0x20
-//NOTE: INPUTS MASK (are all active low signals!)
+//NOTE: INPUTS MASK (are all active low signals!(for now))
 #define NEEDLE_UP   0b10000000
 #define NEEDLE_DOWN 0b01000000
 #define XHOME       0b00100000
@@ -83,8 +92,8 @@
 #define YMAX        0b00000100
 //OUTPUTS MASKS
 #define NEEDLE_DRV  0b00000001  //  active High
-#define ENAXN       0b00000010  //  active low
-#define ENAYN       0b00000100  //  active low
+#define ENAYN       0b00000010  //  active low
+#define ENAXN       0b00000100  //  active low
 #define STEP        0b00001000  //  rising edge
 #define DIR         0b00010000
 #define MODE        0b11100000
@@ -116,7 +125,25 @@ bool AUX_ACTIVE = false;
 
 String OSNAME = "eMB-OS V1.1";
 String TimeStamp = "";
-int XORG, YORG, XPOS, YPOS, XDEST, YDEST; // start,current,dest coordinates
+/*
+  ORG - starting positions
+  POS - current positions
+  DEST - destination positions
+  OFFSET -  relative offset coordinates
+  once POS gets to DEST from ORG then DEST becomes the new ORG after the position move
+  Offsets are values relative to fabric position and soft-limits so a home point can be
+  assigned on the work surface.
+  SYSTEM_BUSY - the highest priority tasks are running when true.
+  MachineRun - true while a move and cycle operation is in effect.
+  Verbosity - sets the level of verbosness from numeric code to alpha strings.
+  NeedleUp  - checks the logic for Up condition.
+  NeedleDown  - Down condition.
+  Forward - motor step dirction.
+  CalGood - if the system hommed X and Y successfully. Certain test operations will cause
+  the calibrations to be off or just may require re-calibration.
+*/
+
+int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET;
 bool SYSTEM_BUSY = false;
 bool MachineRun = false;
 bool Verbosity = true;
@@ -129,7 +156,7 @@ bool CalGood = false;         //  calibration has been completed sucessfully.
 uint8_t limits, comval;
 const int EstopPin = 4; //GPIO4 - EMERGENCY STOP PIN !!
 const int SDCardSelect = 5;
-const int WorkLights = 34;  //  GPIO34 - work lights via the ULN2803A (IC-3 BOM)
+const int WorkLights = 34;  //  GPIO34 - work lights via the ULN2803A
 int MWAIT = 10;    //  motor wait timing
 // change your threshold value here
 const int touch_threshold = 20;

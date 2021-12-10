@@ -32,8 +32,18 @@
   0x21 - MCP23017 - Aux Controller
   0x3C - OLED - used
   0x68 - MPU6050 - Head motion detect.
-
+  ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
+
+   Modes:
+  0 - 1/1
+  1 - 1/2
+  2 - 1/4
+  3 - 1/8   (not used)
+  4 - 1/16  (not used)
+  5 - 1/32  (not used)
+
+  Subject to change, without notice!
 */
 
 #include <Adafruit_MPU6050.h>
@@ -99,8 +109,8 @@ void InitControllerPort() {
   }
 }
 /*
- * Dear compiler... please go easy on me today, my morning has been rough.
- */
+   Dear compiler... please go easy on me today, my morning has been rough.
+*/
 bool IsAtDestination() {
   if ((XPOS = XDEST) && (YPOS = YDEST)) {
     return true;
@@ -171,7 +181,7 @@ void CycleNeedle() {
 
 /*
    command to move X-motor one step!
-   param: dir True is forward else reverse.
+   param: dir = true is forward else reverse.
    param: sm = 0 is full step (400 steps/rev)
    param: sm = 1 is 1/2 step (800 steps/rev)
    param: sm = 2 is 1/4 step(1600 steps/rev)
@@ -293,9 +303,9 @@ void MoveYMotor(bool dir, int sm) {
   delay(MWAIT);  //wait  milliseconds for motor to move or we can check the MPU5060 later
 }
 /*
- * Compiler, I'll be back shortly. Just going out to clear my head. I'm going to
- * the python club!! Where whitespace rules!
- */
+   Compiler, I'll be back shortly. Just going out to clear my head. I'm going to
+   the python club!! Where whitespace rules!
+*/
 
 /*
    checks if the head is at the X axis home position.
@@ -363,6 +373,7 @@ void HomeAll() {
 bool DeadStop() {
   return true;
 }
+
 /*
 
 */
@@ -434,6 +445,10 @@ void EStopMachine() {
   delay(5000);
   display1.stopscroll();
 }
+/*
+   Dear Complier, Error Messages, please let's have none of those.
+   I think you're ignoring me!
+*/
 void errorMsg(String error, bool restart = true) {
   if (restart) {
     DrawBanner();
@@ -468,7 +483,7 @@ void JoinLocalNetwork() {
   WiFi.mode(WIFI_AP_STA);
   WiFi.begin(ssid, password);
   while (!isConnected()) {
-    delay(500);
+    delay(1000);
     DrawBanner();
     display1.setCursor(10, 15);
     display1.print("Connecting to the");
@@ -485,7 +500,6 @@ void JoinLocalNetwork() {
   timeClient.update();
   display1.clearDisplay();
   ShowWifi();
-  delay(2000);
 }
 bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, int pause = 500) {
   int i = 0;
@@ -567,10 +581,6 @@ void CheckForHTTPRequest() {
   WiFiClient client = server.available();   // listen for incoming clients
 
   if (client) {                             // if you get a client,
-#ifdef DEBUG
-    telnet.println("New HTTP Client.");          // print a message out the telnet port
-#endif
-
     String currentLine = "";                // make a String to hold incoming data from the client
     while (client.connected()) {            // loop while the client's connected
       if (client.available()) {             // if there's bytes to read from the client,
@@ -654,9 +664,10 @@ void ScanI2CBus() {
     error = Wire.endTransmission();
     if (error == 0) {
       display1.setCursor(10, 25);
-      display1.print("             ");
+      display1.print("                  ");
       display1.setCursor(10, 25);
       display1.print("I2C at 0x");
+      
       if (address < 0x10) {
         display1.print("0");
       }
@@ -666,7 +677,7 @@ void ScanI2CBus() {
 
       if (address == 0x20) {
         display1.setCursor(10, 35);
-        display1.print("             ");
+        display1.print("                 ");
         display1.setCursor(10, 35);
         display1.print("Port - Motors");
         display1.display();
@@ -674,7 +685,7 @@ void ScanI2CBus() {
       }
       if (address == 0x21) {
         display1.setCursor(10, 35);
-        display1.print("             ");
+        display1.print("                ");
         display1.setCursor(10, 35);
         display1.print("Port - Aux");
         display1.display();
@@ -682,16 +693,16 @@ void ScanI2CBus() {
       }
       if (address == 0x3C) {
         display1.setCursor(10, 35);
-        display1.print("             ");
+        display1.print("                ");
         display1.setCursor(10, 35);
         display1.print("OLED - Me!");
         display1.display();
       }
       if (address == 0x68) {
         display1.setCursor(10, 35);
-        display1.print("               ");
+        display1.print("                 ");
         display1.setCursor(10, 35);
-        display1.print("MPU6050 Accel  ");
+        display1.print("MPU6050 Accel    ");
         display1.display();
         MPU6050_ACTIVE = true;
       }

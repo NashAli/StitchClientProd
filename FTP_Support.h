@@ -6,7 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  
+
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -32,10 +32,10 @@
   0x21 - MCP23017 - Aux Controller
   0x3C - OLED - used
   0x68 - MPU6050 - Head motion detect.
-
+  ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
 
-
+  Subject to change, without notice!
 */
 #include "ESP32FtpServer.h"       //  FTP
 FtpServer ftpSrv;

@@ -32,8 +32,10 @@
   0x68 - MPU6050 - Head motion detect.
 
   DRV8825 - stepper motor driver PCB
-
-
+  
+  12:13 12/10/2021
+  759,826 bytes Program (57%)
+  045,036 bytes Ram (14%)
 */
 
 

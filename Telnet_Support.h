@@ -6,7 +6,6 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  This is NOT Free software!
 
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -51,7 +50,7 @@
   selftest
   calibrate
 
-  Machine Controls
+  Machine Controls:
 
   W - goto coords and wait
   G - goto coords and cycle needle
@@ -66,7 +65,9 @@
 
 ESPTelnet telnet;       //  setup telnet
 
-
+/*
+   ANSI Terminal ESC sequences
+*/
 String ABlack =  "\u001b[30m";
 String ARed =  "\u001b[31m";
 String AGreen =  "\u001b[32m";
@@ -89,37 +90,63 @@ String ABrightWhite = "\u001b[37;1m";
 String ABold = "\u001b[1m";
 String ClearScreen = "\u001b[2J";
 String HomeCursor = "\u001b[;H";
+
+String ASlowBlink = "\u001b[5m";
+String AFastBlink = "\u001b[6m";
 /*
    rr - response required if '1'
    rt - true for OK or 1
    pt - prompt type (symbol)
 */
-void ResponsePrompt(bool rr, bool rt, int ptr) {
+void ResponsePrompt(int rr, int rt, int ptr) {
 
-  switch (rt) {
-    case true:
-      if (Verbosity) {
-        telnet.println(ABrightGreen + "OK");
-      } else {
-        telnet.println("1");
-      }
-      break;
-    case false:
-      if (Verbosity) {
-        telnet.println(ABrightRed + "error");
-      } else {
-        telnet.println("0");
-      }
-      break;
-    default:
-      // if nothing else matches, do the default
-      // default is optional
-      break;
+  //  outcomes for system response. eg. OK, error, busy, Access denied!, Not Found!
+  if (rr == 1) {
+    switch (rt) {
+      case 0:
+        if (Verbosity) {
+          telnet.println(ABrightGreen + "OK");
+        } else {
+          telnet.println("0");
+        }
+        break;
+      case 1:
+        if (Verbosity) {
+          telnet.println(ABrightRed + "error");
+        } else {
+          telnet.println("1");
+        }
+        break;
+      case 2:
+        if (Verbosity) {
+          telnet.println(ABrightBlue + "busy");
+        } else {
+          telnet.println("2");
+        }
+        break;
+      case 3:
+        if (Verbosity) {
+          telnet.println(ABrightMagenta + "Access Denied!");
+        } else {
+          telnet.println("3");
+        }
+        break;
+      case 4:
+        if (Verbosity) {
+          telnet.println(ABrightYellow + "Not Found!");
+        } else {
+          telnet.println("4");
+        }
+        break;
+      default:
+        // if nothing else matches, do the default
+        // default is optional
+        break;
+    }
   }
-
   switch (ptr) {
     case 0:
-      telnet.print(AReset);
+      telnet.println(AReset);
       break;
     case 1:
       telnet.print(ABrightYellow + ">" + AReset);
@@ -134,31 +161,35 @@ void ResponsePrompt(bool rr, bool rt, int ptr) {
       telnet.print(ABrightYellow + "-" + AReset);
       break;
     default:
-      // if nothing else matches, do the default
+      // if nothing else matches, do this
       telnet.print(ABrightYellow + ">" + AReset);
-      // default is optional
       break;
   }
 }
 
 /*
   needs work !!!
+  now if you are connected via telnet via the AP then the "No networks found" might make sense
+  but on the other hand, if connected via Router then No Networks found, doesn't get there!!!
 */
 void TelNetScan() {
-  ResponsePrompt(0, true, 3); //system prompt
+  SYSTEM_BUSY = true;
+  ResponsePrompt(0, 0, 3); //system prompt
   telnet.println( AGreen + "Scannning the Local Area Network..." + AReset);
   // WiFi.scanNetworks will return the number of networks found
   int n = WiFi.scanNetworks();
   if (n == 0) {
     //no networks found go AP
-    telnet.println(ABrightRed + "No Local Networks Found! - Use AP address." + AReset);
+    telnet.println(ABrightRed + "No Local Networks Found? - Connect to AP address: 192.168.5.1");
+    telnet.println(ABrightGreen + "Open your wifi settings and find the address above." + AReset);
   } else {
+    telnet.println(ABrightGreen + "List of available wifi connections." + AReset);
     for (int i = 0; i < n; ++i) {
       // Print SSID and RSSI for each network found
       String ss = String( WiFi.RSSI(i));
       String sc = String(i + 1);
       String sn = String(WiFi.SSID(i));
-      ResponsePrompt(0, true, 3); //system prompt
+      ResponsePrompt(0, 0, 3); //system prompt
       telnet.print(sc);
       telnet.print(ABrightBlue + ":" + AReset);
       if (sn == " " || sn == "") {
@@ -173,38 +204,43 @@ void TelNetScan() {
     }
   }
   telnet.println("");
-  ResponsePrompt(1, true, 1); //OK,system prompt
+  ResponsePrompt(1, 0, 1); //OK,system prompt
+  SYSTEM_BUSY = false;
 }
 void TelSysStat() {
-  ResponsePrompt(0, true, 2); //subsystem prompt
+  SYSTEM_BUSY = true;
+  ResponsePrompt(0, 0, 2); //subsystem prompt
   telnet.println( ACyan + "Status:" + AReset);
-  telnet.println("Current Time : " + GetASCIITime());
+  telnet.println(AYellow + "Current Local Time : " + ABrightWhite + GetASCIITime());
   telnet.print(ABrightBlue + "Local IP: " + ABrightYellow);
   telnet.println(WiFi.localIP().toString());
   telnet.println(AGreen + "Connected to IP Address: " + ABrightRed + telnet.getIP());
   telnet.println(AReset + "AP Address: 192.168.5.1");
-  ResponsePrompt(1, true, 1); //OK,system prompt
+  ResponsePrompt(1, 0, 1); //OK,system prompt
+  SYSTEM_BUSY = false;
 }
 void TelCalibrate() {
   telnet.println(ACyan + "Calibrate Machine.." + AReset);
-  ResponsePrompt(1, true, 2);  //OK,subsystem prompt
+  SYSTEM_BUSY = true;
+  ResponsePrompt(1, 0, 2);  //OK,subsystem prompt
   telnet.println(ABrightRed + "Running Calibration Sequence!! - Standby..." + AReset);
+  ShowPosition();
   delay(3000);
-  ResponsePrompt(1, true, 2);  //OK,subsystem prompt
+  ResponsePrompt(1, 0, 2);  //OK,subsystem prompt
   telnet.println(ABrightRed + "Calibration Done!" + AReset);
-  ResponsePrompt(1, true, 1);  //OK,system prompt
+  ResponsePrompt(1, 0, 1);  //OK,system prompt
+  SYSTEM_BUSY = false;
 }
 /*
 
 */
 void RunLimitsTest() {
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "Done!" + AReset);
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 0, 1); //system prompt
 }
-
 /*
-   X Motor Test DRV8825
+   Selftest Help
 */
 void ShowTestHelp() {
   telnet.println(ABrightYellow + "           SelfTest Help!" + AReset);
@@ -215,83 +251,94 @@ void ShowTestHelp() {
   telnet.println(ABrightBlue + " selftest -L" + AWhite + "         - Limit sensor test." + AReset);
   telnet.println(ABrightBlue + " selftest -C" + AWhite + "         - Calibration plot test.(requires a paper paddle)" + AReset);
 }
+
+/*
+   X Motor Test DRV8825
+*/
 void RunXTest() {
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  SYSTEM_BUSY = true;
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test X axis!" + AReset);
   telnet.println(ABrightYellow + "reverse - 1/1 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(!Forward, 0);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightYellow + "reverse - 1/2 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(!Forward, 1);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightYellow + "reverse - 1/4 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(!Forward, 2);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/1 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(Forward, 0);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/2 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(Forward, 1);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/4 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveXMotor(Forward, 2);
   }
-  ResponsePrompt(1, true, 2); //OK, subsystem prompt
+  ResponsePrompt(1, 0, 2); //OK, subsystem prompt
   telnet.println(ABrightGreen + "completed." + AReset);
+  SYSTEM_BUSY = false;
 }
 /*
    Y Motor Test DRV8825
 */
 void RunYTest() {
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  SYSTEM_BUSY = true;
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test Y axis!" + AReset);
   telnet.println(ABrightYellow + "reverse - 1/1 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveYMotor(!Forward, 0);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightYellow + "reverse - 1/2 step!" + AReset);
   for (int ctr = 1; ctr < (STEPPERREV * 2); ctr++) {
     MoveYMotor(!Forward, 1);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightYellow + "reverse - 1/4 step!" + AReset);
   for (int ctr = 1; ctr < (STEPPERREV * 4); ctr++) {
     MoveYMotor(!Forward, 2);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/1 step!" + AReset);
   for (int ctr = 1; ctr < STEPPERREV; ctr++) {
     MoveYMotor(Forward, 0);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/2 step!" + AReset);
   for (int ctr = 1; ctr < (STEPPERREV * 2); ctr++) {
     MoveYMotor(Forward, 1);
   }
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightBlue + "forward - 1/4 step!" + AReset);
   for (int ctr = 1; ctr < ( STEPPERREV * 4); ctr++) {
     MoveYMotor(Forward, 2);
   }
-  ResponsePrompt(1, true, 2); //OK, subsystem prompt
+  ResponsePrompt(1, 0, 2); //OK, subsystem prompt
   telnet.println(ABrightGreen + "completed." + AReset);
+  SYSTEM_BUSY = false;
 }
+/*
+   I2C Bus scan
+*/
 void RunI2CBusScanTest() {
-  ResponsePrompt(1, true, 2); //OK, subsystem prompt only
-  telnet.println(ABrightRed + "running i2c bus scan!" + AReset);
-  ResponsePrompt(1, true, 1); //OK, system prompt
+  ResponsePrompt(1, 0, 2); //OK, subsystem prompt only
+  telnet.println(ABrightYellow + "Running i2c bus scan!.. Standby." + AReset);
+  ResponsePrompt(1, 3, 1); //Access Denied!, system prompt
 }
 /*
   System Diagnostics - motor test, remote test,...
@@ -347,33 +394,32 @@ void TelSelfTest(String command) {
 */
 void TelSysLogs() {
   telnet.println(ACyan + "Logs..." + AReset);
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println("none");
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 0, 1); //system prompt
 }
 
 void TelSysFiles() {
   telnet.println(ABrightGreen + "File Listings..." + AReset);
-
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 3, 1); //Not Found, system prompt
 }
 
 void TelSysJobs() {
   telnet.println( AGreen + "Jobs..." + AReset);
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println("no jobs in list");
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 0, 1); //system prompt
 }
 void TelSysRun(String command) {
   telnet.println(ABrightGreen + "Run Job..." + AReset);
-  ResponsePrompt(0, false, 2); //system prompt only
+  ResponsePrompt(0, 1, 2); //system prompt only
   telnet.println("none to select");
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 0, 1); //system prompt
 }
 void TelSysCancel() {
-  ResponsePrompt(0, true, 2); //subsystem prompt only
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println("nothing to cancel");
-  ResponsePrompt(1, true, 1); //system prompt
+  ResponsePrompt(1, 0, 1); //system prompt
 }
 void TelSysHelp() {
   telnet.println(ABrightYellow + "              Help system!" + AReset);
@@ -401,27 +447,27 @@ void TelSysHelp() {
   telnet.println();
   telnet.println(ABrightWhite + "    Type" + ACyan + " [command]" + AYellow + "-" + ABrightGreen + "help" + AYellow + " / -" + ABrightGreen + "?" + ABrightBlue + " for more details." + AReset);
   telnet.println();
-  ResponsePrompt( 1, true, 1); //system prompt
+  ResponsePrompt( 1, 0, 1); //system prompt
 }
 /*
 
 */
 void TelQuit() {
   telnet.println("Are you sure?");
-  ResponsePrompt(1, true, 0); //no system prompt
+  ResponsePrompt(1, 0, 0); //no system prompt
 }
 
 /* -------------------------- COMMAND PARSER ------------------------------------------------------- */
 
-void CheckForCommand(String command) {
+void ParseCommand(String command) {
   //parses the telnet entry and locates instructions and completes the tasks
 
   if (command == "") {
-    ResponsePrompt(1, true, 1); //system prompt
+    ResponsePrompt(1, 1, 1); //system prompt
   }
   if (command.startsWith("selftest")) {
     TelSelfTest(command);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
   }
   if (command == "netscan" || command == "net" || command == "nets" || command == "netsc") {
     TelNetScan();
@@ -447,11 +493,11 @@ void CheckForCommand(String command) {
   if (command == "cancel") {
     TelSysCancel();
   }
-  if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP") {
+  if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP" || command == "HELP!") {
     TelSysHelp();
   }
   if (command.startsWith("#")) {
-    ResponsePrompt(1, true, 1); //system prompt
+    ResponsePrompt(1, 0, 1); //system prompt
   }
   if (command.startsWith("W>")) {
     int se = command.length();
@@ -466,7 +512,7 @@ void CheckForCommand(String command) {
     telnet.println(x_param);
     telnet.println(y_param);
     telnet.print(AReset);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
 
   }
   if (command.startsWith("G>")) {
@@ -482,30 +528,30 @@ void CheckForCommand(String command) {
     telnet.println(x_param);
     telnet.println(y_param);
     telnet.print(AReset);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
   }
 
   if (command.startsWith("M>")) {
     int Index1 = command.indexOf(' ');
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
     int se = command.length();
     String m_param = command.substring(Index1, se);
     telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + m_param + ".msf" + AReset);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
   }
 
   if (command.startsWith("T>")) {
     int Index1 = command.indexOf(' ');
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
     int se = command.length();
     String t_param = command.substring(Index1, se);
     telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
   }
   if (command.startsWith("C>")) {
     MachineRun = true;
     telnet.println(ABrightRed + "Job Paused" + AReset);
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);
   }
   if (command.startsWith("V>")) {
     int idx = command.indexOf(' ');
@@ -516,19 +562,25 @@ void CheckForCommand(String command) {
     } else {
       Verbosity = true;
     }
-    ResponsePrompt(1, true, 1);
+    ResponsePrompt(1, 0, 1);  //OK, system prompt - normal completion.
   }
 
 }
+/*
+ * *************************************************************************************************
+*/
 // (optional) callback functions for telnet events
 void OnTelnetConnect(String ip) {
   telnet.println(ClearScreen);
   telnet.println(HomeCursor);
-  telnet.print(ABrightRed + ABold + " eMBOS V1.1 " + AReset + ABrightCyan + "Telnet Service: ");
-  telnet.println(ABrightBlue + GetASCIITime());
-  telnet.println(ACyan + " Welcome " + AYellow + telnet.getIP());
+  telnet.println(ABrightRed + ABold + " eMBOS V1.1 " + AReset);
+  telnet.print(ABrightCyan + " System Local Time: ");
+  String nt = String(GetASCIITime());
+  telnet.println(ABrightBlue + nt );
+  telnet.println(ABrightMagenta +  ABold + " Telnet Service:");
+  telnet.println(ACyan + " Welcome user -> " + AYellow + telnet.getIP());
   telnet.println(AGreen + " Type '?' or 'help' for commands" + AReset);
-  ResponsePrompt(1, true, 1);
+  ResponsePrompt(1, 0, 1);
   DrawBanner();
   display1.setCursor(45, 15);
   display1.print("Telnet:");
@@ -589,7 +641,8 @@ void SetupTelnet() {
   // passing a lambda function
   telnet.onInputReceived([](String str) {
     // checks for a command entered by user at terminal.
-    CheckForCommand(str);
+    while (SYSTEM_BUSY) {}
+    ParseCommand(str);
   });
   DrawBanner();
   display1.setCursor(45, 15);

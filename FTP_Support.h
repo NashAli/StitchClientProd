@@ -6,7 +6,6 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  This is NOT Free software!
   
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal

@@ -6,8 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  This is NOT Free software!
-  
+
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -99,6 +98,17 @@ void InitControllerPort() {
     delay(500);
   }
 }
+/*
+ * Dear compiler... please go easy on me today, my morning has been rough.
+ */
+bool IsAtDestination() {
+  if ((XPOS = XDEST) && (YPOS = YDEST)) {
+    return true;
+  } else {
+    return false;
+  }
+
+}
 
 /*
    Read the limits port A of the MCP23017 Motors control.
@@ -160,28 +170,35 @@ void CycleNeedle() {
 }
 
 /*
-   command to move X-motor dir True is forward, sm 0 is full step sm=1 1/2 step sm = 2  is 1/4 step
+   command to move X-motor one step!
+   param: dir True is forward else reverse.
+   param: sm = 0 is full step (400 steps/rev)
+   param: sm = 1 is 1/2 step (800 steps/rev)
+   param: sm = 2 is 1/4 step(1600 steps/rev)
 */
 void MoveXMotor(bool dir, int sm) {
   if (dir) {
     switch (sm) {
       case 0:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x02);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/1
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x02);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/1 - 400 steps/rev
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x0A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x02);  // send pre-step
+        XPOS = XPOS + 4;
         break;
       case 1:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x22);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/2
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x22);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/2 - 800 steps/rev
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x2A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x22);  // send pre-step
+        XPOS = XPOS + 2;
         break;
       case 2:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x42);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/4
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x42);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/4 - 1600 steps/rev
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x4A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x42);  // send pre-step
+        XPOS = XPOS + 1;
         break;
     }
   } else {
@@ -191,26 +208,34 @@ void MoveXMotor(bool dir, int sm) {
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x1A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x12);  // send pre-step
+        XPOS = XPOS - 4;
         break;
       case 1:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x32);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/2
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x3A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x32);  // send pre-step
+        XPOS = XPOS - 2;
         break;
       case 2:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x52);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/4
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x5A);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x52);  // send pre-step
+        XPOS = XPOS - 1;
         break;
     }
   }
+  ShowPosition();
   delay(MWAIT); //wait  milliseconds for the motor to move
 }
 
 /*
-   command  to move Y-motor
+   command to move Y-motor one step!
+   param: dir = true is forward else reverse.
+   param: sm = 0 is full step (400 steps/rev)
+   param: sm = 1 is 1/2 step (800 steps/rev)
+   param: sm = 2 is 1/4 step(1600 steps/rev)
 */
 void MoveYMotor(bool dir, int sm) {
   if (dir) {
@@ -221,20 +246,24 @@ void MoveYMotor(bool dir, int sm) {
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x0C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x04);  // send pre-step
+        YPOS = YPOS + 4;
         break;
       case 1:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x24);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/2
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x2C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x24);  // send pre-step
+        YPOS = YPOS + 2;
         break;
       case 2:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x44);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/4
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x4C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x44);  // send pre-step
+        YPOS = YPOS + 1;
         break;
     }
+    YPOS = YPOS + 1;
   } else {
     switch (sm) {
       case 0:
@@ -242,24 +271,31 @@ void MoveYMotor(bool dir, int sm) {
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x1C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x14);  // send pre-step
+        YPOS = YPOS - 4;
         break;
       case 1:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x34);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/2
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x3C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x34);  // send pre-step
+        YPOS = YPOS - 2;
         break;
       case 2:
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x54);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/4
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x5C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x54);  // send pre-step
+        YPOS = YPOS - 1;
         break;
     }
   }
+  ShowPosition();
   delay(MWAIT);  //wait  milliseconds for motor to move or we can check the MPU5060 later
 }
-
+/*
+ * Compiler, I'll be back shortly. Just going out to clear my head. I'm going to
+ * the python club!! Where whitespace rules!
+ */
 
 /*
    checks if the head is at the X axis home position.

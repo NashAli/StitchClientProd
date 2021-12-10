@@ -240,7 +240,7 @@ void TelNetScan() {
   SYSTEM_BUSY = false;
 }
 
-void TelDirectory(File dir, int numTabs) {
+void TelFileDirectory(File dir, int numTabs) {
   while (true) {
     File entry =  dir.openNextFile();
     if (!entry) {
@@ -254,7 +254,7 @@ void TelDirectory(File dir, int numTabs) {
     telnet.print(en);
     if (entry.isDirectory()) {
       telnet.println("/");
-      printDirectory(entry, numTabs + 1);
+      TelFileDirectory(entry, numTabs + 1);
     } else {
       // files have sizes, directories do not
       telnet.print(tab + tab);
@@ -471,8 +471,9 @@ void TelSysLogs() {
 
 void TelSysFiles() {
   telnet.println(ABrightGreen + "File Listings..." + AReset);
+  SD.begin();
   File root = SD.open("/");
-  TelDirectory(root, 0);
+  TelFileDirectory(root, 0);
   ResponsePrompt(1, 0, 1); //OK, system prompt
 }
 

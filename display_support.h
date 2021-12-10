@@ -6,7 +6,6 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  This is NOT Free software!
   
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -93,15 +92,15 @@ void DrawBanner() {
  */
 void ShowPosition() {
   DrawBanner();
-  display1.setCursor(20, 15);
+  display1.setCursor(20, 20);
   display1.print("X:");
-  display1.setCursor(30, 15);
+  display1.setCursor(30, 20);
   display1.print(XPOS);
-  display1.setCursor(20, 25);
+  display1.setCursor(20, 30);
   display1.print("Y:");
-  display1.setCursor(30, 25);
+  display1.setCursor(30, 30);
   display1.print(YPOS);
-  display1.setCursor(20, 35);
+  display1.setCursor(20, 40);
   display1.print("HEAD: UP");
   display1.display();
 }

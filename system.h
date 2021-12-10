@@ -6,8 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  This is NOT Free software!
-  
+ 
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -100,7 +99,7 @@
 #define FOREWARD  0b1
 #define BACKWARD  0b0
 
-#define STEPPERREV  400       //  set the steps per revolution of the motor
+#define STEPPERREV  400       //  set the steps per revolution of the motor for 1:1 mode
 
 // MCP23017 - AUXILLARY_CONTROLLER @ 0x21
 
@@ -118,6 +117,7 @@ bool AUX_ACTIVE = false;
 String OSNAME = "eMB-OS V1.1";
 String TimeStamp = "";
 int XORG, YORG, XPOS, YPOS, XDEST, YDEST; // start,current,dest coordinates
+bool SYSTEM_BUSY = false;
 bool MachineRun = false;
 bool Verbosity = true;
 bool NeedleUp = false;
@@ -135,6 +135,7 @@ int MWAIT = 10;    //  motor wait timing
 const int touch_threshold = 20;
 // variable for storing the touch pin value
 int touchValue;
+const int httpPort = 80;
 const int serverPort = 4080;
 const char* ssidAP = "STITCH";
 const char* appwd = "sewpatch";
@@ -145,7 +146,7 @@ const int LOCAL_TIME_OFFSET = -5;
 const long utcOffsetInSeconds = 3600 * LOCAL_TIME_OFFSET;
 
 IPAddress ip;
-WiFiServer server(80);  //  setup the http server
+WiFiServer server(httpPort);  //  setup the http server
 WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);

@@ -189,7 +189,7 @@ void ResponsePrompt(int rr, int rt, int ptr) {
 void TelNetScan() {
   SYSTEM_BUSY = true;
   ResponsePrompt(0, 0, 3); //system prompt
-  telnet.println( AGreen + "Scannning the Local Area Network..." + AReset);
+  telnet.println( AGreen + "Scanning the Local Area Network..." + AReset);
   // WiFi.scanNetworks will return the number of networks found
   int n = WiFi.scanNetworks();
   if (n == 0) {

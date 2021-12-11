@@ -26,7 +26,7 @@
   SOFTWARE.
 
   This project uses the Devkit esp32 WROOM 32 module.
-
+  See docs for more info.
   I2C Device Listing
   0x20 - MCP23017 Port Expander - Stepper Motor Drivers
   0x21 - MCP23017 - Aux Controller

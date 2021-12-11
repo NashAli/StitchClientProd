@@ -26,7 +26,7 @@
   SOFTWARE.
 
   This project uses the Devkit esp32 WROOM 32 module.
-
+  See docs for more info.
   I2C Device Listing
   0x20 - MCP23017 Port Expander - Stepper Motor Drivers
   0x21 - MCP23017 - Aux Controller
@@ -65,19 +65,13 @@ void InitMotorsPort() {
     mcp.writeRegister(MCP23017Register::GPIO_A, 0x00);  //Reset port A
     mcp.writeRegister(MCP23017Register::GPIO_B, 0x06);  //Reset port B to default value()
     //set the limits interrupt to GPIO34
-    display1.clearDisplay();
-    display1.drawRect(0, 0, 127, 63, WHITE);
-    display1.setCursor(30, 5);
-    display1.print(OSNAME);
+    DrawBanner();
     display1.setCursor(20, 20);
     display1.print("Motors in!");
     display1.display();
     delay(500);
   } else {
-    display1.clearDisplay();
-    display1.drawRect(0, 0, 127, 63, WHITE);
-    display1.setCursor(30, 5);
-    display1.print(OSNAME);
+    DrawBanner();
     display1.setCursor(20, 20);
     display1.print("No Motors!");
     display1.display();
@@ -98,11 +92,8 @@ void InitControllerPort() {
     display1.display();
     delay(500);
   } else {
-    display1.clearDisplay();
-    display1.drawRect(0, 0, 127, 63, WHITE);
-    display1.setCursor(30, 5);
-    display1.print(OSNAME);
-    display1.setCursor(10, 20);
+    DrawBanner();
+    display1.setCursor(20, 20);
     display1.print("No Remote Control");
     display1.display();
     delay(500);
@@ -370,7 +361,7 @@ void HomeAll() {
 /*
    Reads the accelerometer;returns true if not moving!
 */
-bool DeadStop() {
+bool IsDeadStop() {
   return true;
 }
 
@@ -381,7 +372,7 @@ void GotoPoint(int xpos, int ypos) {
 
 }
 /*
-
+  Needle Test bypasses MotionSense!
 */
 void RunNeedleTest(int m) {
   switch (m) {
@@ -412,7 +403,7 @@ void TestCalibration() {
 
 */
 void StitchHere() {
-  while (DeadStop) {
+  while (IsDeadStop) {
 
   }
 
@@ -575,7 +566,7 @@ void StopSSH() {
 }
 
 /*
-
+  Future use
 */
 void CheckForHTTPRequest() {
   WiFiClient client = server.available();   // listen for incoming clients
@@ -601,11 +592,7 @@ void CheckForHTTPRequest() {
             client.println("<!DOCTYPE html>");
             client.println("<html>");
             client.println("<h1>The STITCHER</h1>");
-            client.println("<button type=""button"" onclick=""alert('You pressed the ON button!')"">ON</button>");
             client.println("<button type=""button"" onclick=""alert('You pressed the button!')"">Click me!</button>");
-            client.println("<button type=""button"" onclick=""alert('You pressed the OFF button!')"">OFF</button>");
-            client.println("Click <a href=\"/H\">here</a> to turn ON the LED.");
-            client.println("Click <a href=\"/L\">here</a> to turn OFF the LED.");
             client.println("</html>");
             // The HTTP response ends with another blank line:
             client.println();
@@ -633,22 +620,13 @@ void CheckForHTTPRequest() {
   }
 }
 
-//  Internal hardware
 /* ------------------------------- HARDWARE -------------------------------------------------- */
 
 /*
-
-*/
-
-/*
   ScanI2CBus is implemented - 9/21/2020
-  this has to be done before init sensor group
-  sets the sensor availability so the system can ignore offline sensors
-  to manage performance and no bad data woes.
-  The i2c_scanner uses the return value of
-  the Write.endTransmisstion to see if
-  a device did acknowledge to the address.
-
+  this has to be done before init sensor group sets the sensor availability so the system can ignore offline sensors
+  to manage performance and no bad data woes.  The i2c_scanner uses the return value of the Write.endTransmisstion to
+  see if a device did acknowledge to the address.
 */
 void ScanI2CBus() {
   int lastRow = 50;
@@ -667,7 +645,7 @@ void ScanI2CBus() {
       display1.print("                  ");
       display1.setCursor(10, 25);
       display1.print("I2C at 0x");
-      
+
       if (address < 0x10) {
         display1.print("0");
       }
@@ -735,6 +713,8 @@ void ScanI2CBus() {
 */
 void IRAM_ATTR CheckLimits() {
   limits = mcp.readPort(MCP23017Port::A);
+  // set a flag for OS, new limits is available.
+
 }
 /*
 
@@ -746,10 +726,8 @@ void InitGPIOInterrupt() {
 }
 
 /*
-   This initialize handles most of the devices that is available
-   If it finds a sensor it attempts to initialize or if the
-   sensor is not attached it will flag the unit so the system
-   will ignore it.
+   This initialize handles most of the devices that is available. If it finds a sensor it attempts to initialize or if the
+   sensor is not attached it will flag the unit so the system will ignore it.
 */
 void InitializeSensorGroup() {
   DrawBanner();

@@ -309,13 +309,13 @@ void RunLimitsTest() {
    Selftest Help
 */
 void ShowTestHelp() {
-  telnet.println(ABrightYellow + "           SelfTest Help!" + AReset);
+  telnet.println(ABrightYellow + "           SelfTest Help!");
   telnet.println();
-  telnet.println(ABrightBlue + " selftest -<help:?>" + AWhite + "    - Shows this command help." + AReset);
-  telnet.println(ABrightBlue + " selftest -M <-X:Y:B>" + AWhite + "  - Selects the motor axis to test, X, Y or both." + AReset);
-  telnet.println(ABrightBlue + " selftest -N <-c:o>" + AWhite + "    - Needle motor test, o - oneshot or a 1 sec burst." + AReset);
-  telnet.println(ABrightBlue + " selftest -I" + AWhite + "           - I2c system discovery test." + AReset);
-  telnet.println(ABrightBlue + " selftest -L" + AWhite + "           - Limit sensor test." + AReset);
+  telnet.println(ABrightBlue + " selftest -<help:?>" + AWhite + "    - Shows this command help.");
+  telnet.println(ABrightBlue + " selftest -M <-X:Y:B>" + AWhite + "  - Selects the motor axis to test, X, Y or both.");
+  telnet.println(ABrightBlue + " selftest -N <-c:o>" + AWhite + "    - Needle motor test, o - oneshot or a 1 sec burst.");
+  telnet.println(ABrightBlue + " selftest -I" + AWhite + "           - I2c system discovery test.");
+  telnet.println(ABrightBlue + " selftest -L" + AWhite + "           - Limit sensor test.");
   telnet.println(ABrightBlue + " selftest -C" + AWhite + "           - Calibration plot test.(requires a paper paddle)" + AReset);
 }
 
@@ -500,26 +500,26 @@ void TelSysCancel() {
 void TelSysHelp() {
   telnet.println(ABrightYellow + "              Help system!" + AReset);
   telnet.println();
-  telnet.println(AMagenta + "    Commands:" + AReset);
+  telnet.println(AMagenta + "    Commands:");
   telnet.println();
-  telnet.println(AGreen + " netscan" + AWhite + "    - returns scan of network." + AReset);
-  telnet.println(AGreen + " status" + AWhite + "     - returns complete status on system." + AReset);
-  telnet.println(AGreen + " logs" + AWhite + "       - returns system logs." + AReset);
-  telnet.println(AGreen + " run" + AWhite + "        - runs a job on the system." + AReset);
-  telnet.println(AGreen + " files" + AWhite + "      - returns file system on machine." + AReset);
-  telnet.println(AGreen + " jobs" + AWhite + "       - show available jobs." + AReset);
-  telnet.println(AGreen + " cancel" + AWhite + "     - cancels job if one is running." + AReset);
-  telnet.println(AGreen + " selftest" + AWhite + "   - selftest diagnostics on system." + AReset);
-  telnet.println(AGreen + " calibrate" + AWhite + "  - runs calibration on system." + AReset);
+  telnet.println(AGreen + " netscan" + AWhite + "    - returns scan of network.");
+  telnet.println(AGreen + " status" + AWhite + "     - returns complete status on system.");
+  telnet.println(AGreen + " logs" + AWhite + "       - returns system logs.");
+  telnet.println(AGreen + " run" + AWhite + "        - runs a job on the system.");
+  telnet.println(AGreen + " files" + AWhite + "      - returns file system on machine.");
+  telnet.println(AGreen + " jobs" + AWhite + "       - show available jobs.");
+  telnet.println(AGreen + " cancel" + AWhite + "     - cancels job if one is running.");
+  telnet.println(AGreen + " selftest" + AWhite + "   - selftest diagnostics on system.");
+  telnet.println(AGreen + " calibrate" + AWhite + "  - runs calibration on system.");
   telnet.println();
-  telnet.println(ABrightRed + "    SewMachine Direct Commands:" + AReset);
+  telnet.println(ABrightRed + "    SewMachine Direct Commands:");
   telnet.println();
-  telnet.println(ABrightBlue + " W> X:<n> Y:<n>" + AWhite + "  - Hover to that location and wait." + AReset);
-  telnet.println(ABrightBlue + " G> X:<n> Y:<n>" + AWhite + "  - cycle NEEDLE at that location." + AReset);
-  telnet.println(ABrightBlue + " T> <colour>" + AWhite + "     - thread change." + AReset);
-  telnet.println(ABrightBlue + " C>" + AWhite + "              - continue." + AReset);
-  telnet.println(ABrightBlue + " M> <name>" + AWhite + "       - call macro - .msf loads file." + AReset);
-  telnet.println(ABrightBlue + " V> <0:1>" + AWhite + "        - set verbosity." + AReset);
+  telnet.println(ABrightBlue + " W> X:<n> Y:<n>" + AWhite + "  - Hover to that location and wait.");
+  telnet.println(ABrightBlue + " G> X:<n> Y:<n>" + AWhite + "  - cycle NEEDLE at that location.");
+  telnet.println(ABrightBlue + " T> <colour>" + AWhite + "     - thread change.");
+  telnet.println(ABrightBlue + " C>" + AWhite + "              - continue.");
+  telnet.println(ABrightBlue + " M> <name>" + AWhite + "       - call macro - .msf loads file.");
+  telnet.println(ABrightBlue + " V> <0:1>" + AWhite + "        - set verbosity.");
   telnet.println();
   telnet.println(ABrightWhite + "    Type" + ACyan + " [command]" + AYellow + "-" + ABrightGreen + "help" + AYellow + " / -" + ABrightGreen + "?" + ABrightBlue + " for more details." + AReset);
   telnet.println();
@@ -728,7 +728,6 @@ void SetupTelnet() {
     display1.setCursor(20, 25);
     display1.print("service running");
     display1.display();
-    delay(2000);
   } else {
     display1.setCursor(45, 25);
     display1.print("system will reboot");

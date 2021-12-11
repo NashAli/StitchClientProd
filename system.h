@@ -26,7 +26,7 @@
   SOFTWARE.
 
   This project uses the Devkit esp32 WROOM 32 module.
-
+  See docs for more info.
   I2C Device Listing
   0x20 - MCP23017 Port Expander - Stepper Motor Drivers
   0x21 - MCP23017 - Aux Controller
@@ -144,23 +144,23 @@ String TimeStamp = "";
 */
 
 int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET;
-bool SYSTEM_BUSY = false;
-bool MachineRun = false;
-bool Verbosity = true;
-bool NeedleUp = false;
-bool NeedleDown = false;
+bool SYSTEM_BUSY = false;     //  OS is busy
+bool MachineRun = false;      //  a motor is cycling (X-Y-Z)
+bool Verbosity = true;        //  setting for communications protocol.
+bool NeedleUp = false;        //
+bool NeedleDown = false;      //
 bool Forward = true;          //  direction logic for DRV8845
 bool CalGood = false;         //  calibration has been completed sucessfully.
-
+bool LIMITS_FAULT = false;    //  a boundary has been breached.
 
 uint8_t limits, comval;
-const int EstopPin = 4; //GPIO4 - EMERGENCY STOP PIN !!
-const int SDCardSelect = 5;
-const int WorkLights = 34;  //  GPIO34 - work lights via the ULN2803A
-int MWAIT = 10;    //  motor wait timing
+const int EstopPin = 4;       //  GPIO4 - EMERGENCY STOP PIN !!
+const int SDCardSelect = 5;   //  GPIO5 on esp32
+const int WorkLights = 34;    //  GPIO34 - work lights via the ULN2803A
+int MWAIT = 10;               //  motor wait timing
 // change your threshold value here
 const int touch_threshold = 20;
-// variable for storing the touch pin value
+// variable for storing the touch pin temporary value
 int touchValue;
 const int httpPort = 80;
 const int serverPort = 4080;

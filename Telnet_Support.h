@@ -26,7 +26,7 @@
   SOFTWARE.
 
   This project uses the Devkit esp32 WROOM 32 module.
-
+  See docs for more info.
   I2C Device Listing
   0x20 - MCP23017 Port Expander - Stepper Motor Drivers
   0x21 - MCP23017 - Aux Controller
@@ -204,6 +204,9 @@ void TelNetScan() {
       String sc = String(i + 1);
       String sn = String(WiFi.SSID(i));
       ResponsePrompt(0, 0, 3); //system prompt
+      if (i < 9){
+        telnet.print("0");
+        }
       telnet.print(sc);
       telnet.print(ABrightBlue + ":" + AReset);
       if (sn == " " || sn == "") {
@@ -251,15 +254,15 @@ void TelFileDirectory(File dir, int numTabs) {
       telnet.print(tab);
     }
     String en = String(entry.name());
-    telnet.print(en);
+    telnet.print(ABrightBlue + en);
     if (entry.isDirectory()) {
-      telnet.println("/");
+      telnet.println(AYellow + "/" + AReset);
       TelFileDirectory(entry, numTabs + 1);
     } else {
       // files have sizes, directories do not
       telnet.print(tab + tab);
       String es = String(entry.size());
-      telnet.println(es + " bytes");
+      telnet.println(AYellow + es + ACyan + " bytes" + AReset);
     }
     entry.close();
   }

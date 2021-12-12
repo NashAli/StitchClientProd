@@ -56,7 +56,18 @@ MCP23017 acp = MCP23017(AuxControl);
 
 //  These are the operational routines for STITCH
 /* -------------------------- MCP23017 INIT ------------------------------------------------------- */
-
+/*
+   TIMESTAMP for logs
+*/
+String GetASCIITime() {
+  time_t rawtime;
+  struct tm *info;
+  time( &rawtime );
+  info = localtime( &rawtime );
+  String mt = asctime(info);
+  mt.replace("\n", "");
+  return mt;
+}
 void InitMotorsPort() {
   if (MOTORS_ACTIVE) {
     mcp.init();
@@ -93,8 +104,8 @@ void InitControllerPort() {
     delay(500);
   } else {
     DrawBanner();
-    display1.setCursor(20, 20);
-    display1.print("No Remote Control");
+    display1.setCursor(25, 20);
+    display1.print("No Remote");
     display1.display();
     delay(500);
   }
@@ -152,7 +163,7 @@ bool IsNeedleDown() {
 */
 void SetNeedleUp() {
   // while
-  // Not IsNeedleUp()
+  // !IsNeedleUp()
   // run needle motor
 }
 /*
@@ -160,14 +171,14 @@ void SetNeedleUp() {
 */
 void SetNeedleDown() {
   // while
-  // Not IsNeedleDown()
+  // !IsNeedleDown()
   // run needle motor
 }
 /*
    Command to full cycle of the needle from the Needle up position.
 */
 void CycleNeedle() {
-
+  //  if needle is at NeedleUp then cycle the needle.
 }
 
 /*
@@ -503,29 +514,8 @@ bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, i
   WiFi.persistent(true);
   return isConnected();
 }
-/*
-    Show the Time
-*/
-void ShowTime() {
-  configTime(utcOffsetInSeconds, 3600, ntpServer);
-  display1.setCursor(5, 50);
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    display1.print("Failed to obtain time");
-    display1.display();
-    return;
-  }
-  display1.print(&timeinfo, "%a,%b,%d,%H:%M:%S");
-  display1.display();
-}
-String GetASCIITime() {
-  time_t rawtime;
-  struct tm *info;
-  time( &rawtime );
-  info = localtime( &rawtime );
-  String mt = asctime(info);
-  return mt;
-}
+
+
 /*
   This initializes the AP setup. This can be done with or without an available network. Typically
   if no network is found or none available to connect to; the SewMachine AP will be activated for
@@ -637,17 +627,16 @@ void ScanI2CBus() {
   display1.setCursor(10, 15);
   display1.print("I2C Bus Scan....");
   display1.display();
+
   for (address = 1; address < 127; address++) {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (error == 0) {
       display1.setCursor(10, 25);
-      display1.print("                  ");
-      display1.setCursor(10, 25);
       display1.print("I2C at 0x");
-
       if (address < 0x10) {
         display1.print("0");
+        display1.display();
       }
       display1.print(address, HEX);
       display1.print(" hex!");
@@ -655,15 +644,11 @@ void ScanI2CBus() {
 
       if (address == 0x20) {
         display1.setCursor(10, 35);
-        display1.print("                 ");
-        display1.setCursor(10, 35);
         display1.print("Port - Motors");
         display1.display();
         MOTORS_ACTIVE = true;
       }
       if (address == 0x21) {
-        display1.setCursor(10, 35);
-        display1.print("                ");
         display1.setCursor(10, 35);
         display1.print("Port - Aux");
         display1.display();
@@ -671,14 +656,10 @@ void ScanI2CBus() {
       }
       if (address == 0x3C) {
         display1.setCursor(10, 35);
-        display1.print("                ");
-        display1.setCursor(10, 35);
-        display1.print("OLED - Me!");
+        display1.print("OLED - Me!    ");
         display1.display();
       }
       if (address == 0x68) {
-        display1.setCursor(10, 35);
-        display1.print("                 ");
         display1.setCursor(10, 35);
         display1.print("MPU6050 Accel    ");
         display1.display();
@@ -689,24 +670,22 @@ void ScanI2CBus() {
     } else if (error == 4) {
       display1.setCursor(5, lastRow);
       display1.print("Error at address 0x");
-      if (address < 16)
+      if (address < 16) {
         display1.print("0");
-      display1.println(address, HEX);
+        display1.println(address, HEX);
+        display1.display();
+      }
+    }
+    if (nDevices == 0) {
+      display1.setCursor(10, lastRow);
+      display1.print("No I2C devices found");
+      display1.display();
+    } else {
+      display1.setCursor(10, lastRow);
+      display1.print("That's all. Done.");
       display1.display();
     }
   }
-  if (nDevices == 0) {
-    display1.setCursor(10, lastRow);
-    display1.print("No I2C devices found");
-    display1.display();
-  } else {
-    display1.setCursor(10, lastRow);
-    display1.print("That's all. Done.");
-    display1.display();
-  }
-  delay(1000);
-  display1.clearDisplay();
-  display1.display();
 }
 /*
 
@@ -714,7 +693,7 @@ void ScanI2CBus() {
 void IRAM_ATTR CheckLimits() {
   limits = mcp.readPort(MCP23017Port::A);
   // set a flag for OS, new limits is available.
-
+  LIMITS_FAULT =  true;
 }
 /*
 
@@ -753,7 +732,5 @@ void InitializeSensorGroup() {
   display1.display();
   delay(2000);
 }
-
-
 
 #endif

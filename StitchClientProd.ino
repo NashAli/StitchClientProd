@@ -32,10 +32,15 @@
   0x68 - MPU6050 - Head motion detect.
 
   DRV8825 - stepper motor driver PCB
-  
-  12:13 12/10/2021
+
+  12:13   12/10/2021
   759,826 bytes Program (57%)
   045,036 bytes Ram (14%)
+
+  16:50   12/12/2021
+  773494 bytes  Program (59%)
+  45180 bytes RAM (13%)
+
 */
 
 
@@ -56,10 +61,12 @@
 
 
 void setup() {
+  Serial.begin(115200);
   // put your setup code here, to run once:
   pinMode(LED_BUILTIN, OUTPUT);
   InitDisplay();
   ScanI2CBus();
+  //InitializeSensorGroup();
   InitializeSDCard(SDCardSelect);
   InitMotorsPort();
   InitControllerPort();
@@ -69,8 +76,9 @@ void setup() {
   SetupTelnet();
   InitFTP();
   //StartSSH();
+  String logthis = ACyan + "System started@:" + AWhite + GetASCIITime();
+  LogToSD(logthis);
   ShowTime();
-  //LogToSD(TimeStamp);
 }
 
 void loop() {

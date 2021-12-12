@@ -6,7 +6,7 @@
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
-  
+
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
@@ -35,18 +35,19 @@
   ULN2803 buffer driver
   DRV8825 - stepper motor driver PCB
 
-Subject to change, without notice!
+  Subject to change, without notice!
 */
 
 // SD Card
 #define SD_CS 5     //GPIO5 is available in this project.
 
-#include "FS.h"
-#include "SD.h"                  //  SD Card
+#include "FS.h"     //  file system
+#include "SD.h"     //  SD Card
 
-File root;
+
 SPIClass spiSD(VSPI);
 bool SDCARD_READY = false;
+
 /*
   SDCARD functions - espressif origins
   using oled display
@@ -59,7 +60,6 @@ bool SDCARD_READY = false;
 
 void InitializeSDCard(int cs)
 {
-
   spiSD.begin(18, 19, 23, cs); //SCK,MISO,MOSI,SS //VSPI1
   if (!SD.begin(cs, spiSD)) {
     SDCARD_READY = false;
@@ -119,9 +119,11 @@ void InitializeSDCard(int cs)
     display1.display();
     delay(1000);
   }
-  SD.end();
+  //SD.end();
 }
+/*
 
+*/
 void printDirectory(File dir, int numTabs)
 {
   // Begin at the start of the directory
@@ -151,7 +153,6 @@ void printDirectory(File dir, int numTabs)
     }
     entry.close();
   }
-  delay(1000);
 }
 
 
@@ -218,41 +219,66 @@ void CheckSDCard(int cs)
   display1.print(cardSize);
   display1.print("MB");
   display1.display();
-  delay(4000);
+  delay(2000);
 }
 
 void LogToSD(String dataString) {
+  File root;
+  root.rewindDirectory();
+  root = SD.open("/syslog.txt", FILE_APPEND);
+  if (!root) {
+    DrawBanner();
+    display1.setCursor(20, 30);
+    display1.print("no logs found.");
+    display1.setCursor(20, 40);
+    display1.print("re-creating....");
+    display1.display();
+    delay(250);
 
-  // open the file. note that only one file can be open at a time,
-  // so you have to close this one before opening another.
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println(dataString);
-    dataFile.close();
+    //create new one here, if necessary
+    String header = ABrightMagenta + "eMBOS -" + ABrightRed + " SYSTEM LOG - " + ABrightCyan + "MASTER";
+    root.println(header);
+    root.println(ABrightYellow + "System Log Started@:" + AWhite + GetASCIITime());
+    String user = AWhite + GetASCIITime() + tab + "Telnet User@" + "default user" + tab + ABrightGreen + "logged in sucessfully!";
+    root.println(user);
+    root.close();
+    display1.setCursor(20, 50);
+    display1.print("done.");
+    display1.display();
+    delay(500);
+  }
+  delay (100);
+  // if the file is available, append to it:
+  if (root) {
+    root.println(dataString);
+    root.close();
   }
   // if the file isn't open, pop up an error:
   else {
-    display1.print("error opening datalog.txt");
+    DrawBanner();
+    display1.setCursor(30, 30);
+    display1.print("log file");
+    display1.setCursor(30, 40);
+    display1.print("not opening.");
+    display1.display();
   }
-
 }
 void DumpLog() {
   if (SDCARD_READY) {
     display1.print("card ready! writing to port:");
     // open the file. note that only one file can be open at a time,
     // so you have to close this one before opening another.
-    File dataFile = SD.open("datalog.txt");
+    File root = SD.open("/syslog.txt", FILE_READ);
     // if the file is available, write to it:
-    if (dataFile) {
-      while (dataFile.available()) {
-        Serial.write(dataFile.read());
+    if (root) {
+      while (root.available()) {
+        Serial.write(root.read());
       }
-      dataFile.close();
+      root.close();
     }
     // if the file isn't open, pop up an error:
     else {
-      display1.print("error opening datalog.txt");
+      Serial.println("error opening syslog.txt");
     }
   }
 }

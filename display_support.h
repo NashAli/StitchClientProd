@@ -145,7 +145,21 @@ void ShowWifi() {
   delay(1000);
 }
 
-
+/*
+    Show the time on oled.
+*/
+void ShowTime() {
+  configTime(utcOffsetInSeconds, 3600, ntpServer);
+  display1.setCursor(5, 50);
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    display1.print("Failed to obtain time");
+    display1.display();
+    return;
+  }
+  display1.print(&timeinfo, "%a,%b,%d,%H:%M:%S");
+  display1.display();
+}
 
 /*
   Diagnostics use - do not use

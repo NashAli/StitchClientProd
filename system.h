@@ -124,7 +124,7 @@ bool AUX_ACTIVE = false;
 //  MACHINE GLOBAL VARIABLES  ********************************************************
 
 String OSNAME = "eMB-OS V1.1";
-String TimeStamp = "";
+
 /*
   ORG - starting positions
   POS - current positions
@@ -143,7 +143,46 @@ String TimeStamp = "";
   the calibrations to be off or just may require re-calibration.
 */
 
-int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET;
+/*
+   ANSI Terminal ESC sequences
+*/
+String ABlack =  "\u001b[30m";
+String ARed =  "\u001b[31m";
+String AGreen =  "\u001b[32m";
+String AYellow =  "\u001b[33m";
+String ABlue =  "\u001b[34m";
+String AMagenta =  "\u001b[35m";
+String ACyan =  "\u001b[36m";
+String AWhite =  "\u001b[37m";
+String AReset =  "\u001b[0m";
+
+String ABrightBlack = "\u001b[30;1m";
+String ABrightRed = "\u001b[31;1m";
+String ABrightGreen = "\u001b[32;1m";
+String ABrightYellow = "\u001b[33;1m";
+String ABrightBlue = "\u001b[34;1m";
+String ABrightMagenta = "\u001b[35;1m";
+String ABrightCyan = "\u001b[36;1m";
+String ABrightWhite = "\u001b[37;1m";
+
+String ABold = "\u001b[1m";
+String AClearScreen = "\u001b[2J";
+String AHomeCursor = "\u001b[;H";
+
+String ASlowBlink = "\u001b[5m";
+String revso_sym = "\u005c";
+String tab = "\u0009";
+String nl = "\n";
+String cr = "\r";
+String cr_sym =  "\u00A9";
+String pat_sym =  "\u1360";
+String tm_sym =  "\u2122";
+String ard_sym =  "\u267E";
+String sman_sym =  "\u26C4";
+String golf_sym =  "\u26F3";
+String upaline = "\u001B[1A";
+
+int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET, SXHOME, SYHOME;
 bool SYSTEM_BUSY = false;     //  OS is busy
 bool MachineRun = false;      //  a motor is cycling (X-Y-Z)
 bool Verbosity = true;        //  setting for communications protocol.

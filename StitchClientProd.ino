@@ -38,12 +38,12 @@
   045,036 bytes Ram (14%)
 
   16:50   12/12/2021
-  773494 bytes  Program (59%)
-  45180 bytes RAM (13%)
+  773,494 bytes  Program (59%)
+  045,180 bytes RAM (13%)
 
-  10:15   12/13/2021
-  773990 bytes  Program (59%)
-  45180 bytes RAM (13%)
+  15:21   12/13/2021
+  776,466 bytes  Program (59%)
+  045,180 bytes RAM (13%)
 */
 
 

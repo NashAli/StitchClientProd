@@ -698,79 +698,125 @@ void ParseCommand(String command) {
   if (command.length() == 0) {
     ResponsePrompt(1, 5, 1); //unknown - system prompt
   }
+  
   else if (command.startsWith("selftest")) {
     TelSelfTest(command);
     ResponsePrompt(1, 0, 1);
   }
+  
   else if (command == "sdcardinfo" || command == "sdc" || command == "sdcard" || command == "sdci") {
     TelSDCardInfo();
   }
+  
   else if (command == "netscan" || command == "net" || command == "nets" || command == "netsc") {
     TelNetScan();
   }
+  
   else if (command == "calibrate" || command == "cal" || command == "cali" || command == "calib") {
     TelCalibrate();
   }
+  
   else if (command == "status" || command == "sta" || command == "stat" || command == "statu") {
     TelSysStat();
   }
+  
   else if (command == "clr") {
     telnet.println(AClearScreen + AHomeCursor);
     ResponsePrompt(0, 0, 1);
   }
+  
   else if (command.startsWith("run")) {
     ResponsePrompt(1, 0, 1);
     String param = command.substring(command.indexOf('-') + 1, command.length());
+    if  (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: run -<jobname>");
+      ResponsePrompt(1, 0, 1);
+    }
     telnet.println(ABrightYellow + "JobName: " + ABrightCyan + param + AReset);
     TelSysRun(param);
   }
+  
   else if (command.startsWith("log")) {
     String param = command.substring(command.indexOf('-') + 1, command.length());
     telnet.println(param);
-    if (param == "del" || param == "DEL"|| param == "delete"|| param == "DELETE") {
+    if (param == "del" || param == "DEL" || param == "delete" || param == "DELETE") {
       TelDeleteSysLogs();
     }
-    else if (param == "l" || param == "L"|| param == "List"|| param == "list") {
+    else if (param == "l" || param == "L" || param == "List" || param == "list") {
       TelShowSysLogs();
     }
+    else if (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: log -<del:list>");
+      ResponsePrompt(1, 0, 1);
+    }
   }
+  
   else if (command.startsWith("list")) {
-    ResponsePrompt(1, 0, 3);
     String param = command.substring(command.indexOf('-') + 1, command.length());
+    if  (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: list -<filename>");
+      ResponsePrompt(1, 0, 1);
+    }
     telnet.println(ABrightYellow + "FileName: " + ABrightCyan + param + AReset);
     TelListFile(param);
   }
+  
   else if (command.startsWith("mkdir")) {
     ResponsePrompt(1, 0, 1);
     String param = command.substring(command.indexOf('-') + 1, command.length());
+    if  (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: mkdir -<dirname>");
+      ResponsePrompt(1, 0, 1);
+    }
     telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
     TelMakeDir(param);
   }
+  
   else if (command.startsWith("rmdir")) {
     ResponsePrompt(1, 0, 1);
     String param = command.substring(command.indexOf('-') + 1, command.length());
+    if  (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: rmdir -<dirname>");
+      ResponsePrompt(1, 0, 1);
+    }
     telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
     TelRemoveDir(param);
   }
+
   else if (command == "files") {
     TelSysFiles();
   }
+
   else if (command == "jobs") {
     TelSysJobs();
   }
+
   else if (command == "cancel") {
     ResponsePrompt(1, 0, 1);
     String param = command.substring(command.indexOf('-') + 1, command.length());
+    if  (param == command || param == "?" || param == "help") {
+      ResponsePrompt(0, 0, 3);
+      telnet.println(ABrightYellow + "usage: cancel -<jobname>");
+      ResponsePrompt(1, 0, 1);
+    }
     telnet.println(ABrightYellow + "Cancel Job: " + ABrightCyan + param + AReset);
     TelSysCancel(param);
     LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --- cancel job --> " + param);
   }
+
   else if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP" || command == "HELP!") {
     TelSysHelp();
   }
+
   else if (command.startsWith("#")) {
     ResponsePrompt(1, 0, 1); //system prompt
   }
+
   else if (command.startsWith("W>")) {
     int se = command.length();
     int xTag = command.indexOf('X:');
@@ -787,6 +833,7 @@ void ParseCommand(String command) {
     ResponsePrompt(1, 0, 1);
 
   }
+
   else if (command.startsWith("G>")) {
     int se = command.length();
     int xTag = command.indexOf('X:');
@@ -812,16 +859,19 @@ void ParseCommand(String command) {
 
   else if (command.startsWith("T>")) {
     ResponsePrompt(1, 0, 1);
+    //TODO: add a GLOBAL THREAD VALUE in "system.h"
     String t_param = command.substring(command.indexOf(' ') + 1, command.length());
     telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
     ResponsePrompt(1, 0, 1);
   }
+
   else if (command.startsWith("C>")) {
     if (MachineRun) {
       telnet.println(ABrightRed + "Job Paused" + AReset);
       ResponsePrompt(1, 0, 1);
     }
   }
+
   else if (command.startsWith("V>")) {
     String blablabla = command.substring(command.indexOf(' ') + 1, command.length());
     if (blablabla == "0" ) {

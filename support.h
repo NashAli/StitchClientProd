@@ -632,11 +632,11 @@ void ScanI2CBus() {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (error == 0) {
+      DrawBanner();
       display1.setCursor(10, 25);
       display1.print("I2C at 0x");
       if (address < 0x10) {
         display1.print("0");
-        display1.display();
       }
       display1.print(address, HEX);
       display1.print(" hex!");
@@ -648,20 +648,20 @@ void ScanI2CBus() {
         display1.display();
         MOTORS_ACTIVE = true;
       }
-      if (address == 0x21) {
+      else if (address == 0x21) {
         display1.setCursor(10, 35);
         display1.print("Port - Aux");
         display1.display();
         AUX_ACTIVE = true;
       }
-      if (address == 0x3C) {
+      else if (address == 0x3C) {
         display1.setCursor(10, 35);
-        display1.print("OLED - Me!    ");
+        display1.print("OLED - Me!");
         display1.display();
       }
-      if (address == 0x68) {
+      else if (address == 0x68) {
         display1.setCursor(10, 35);
-        display1.print("MPU6050 Accel    ");
+        display1.print("MPU6050 Accel");
         display1.display();
         MPU6050_ACTIVE = true;
       }
@@ -677,6 +677,7 @@ void ScanI2CBus() {
       }
     }
     if (nDevices == 0) {
+      DrawBanner();
       display1.setCursor(10, lastRow);
       display1.print("No I2C devices found");
       display1.display();

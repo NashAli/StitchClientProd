@@ -77,9 +77,10 @@ ESPTelnet telnet;       //  setup telnet
 
 
 /*
+   SYSTEM ***************************************************************************************************
    rr - response required if '1'
    rt - 0 "OK", 1 "error", 2 "busy", 3 "Access Denied", 4 "Not Found", 5 "unknown".
-   pt - prompt type (symbol) 0 - 4.
+   pt - prompt type (symbol) 0 - 4. none,top,machine,file,misc.
 */
 void ResponsePrompt(int rr, int rt, int ptr) {
 
@@ -132,38 +133,39 @@ void ResponsePrompt(int rr, int rt, int ptr) {
   }
   switch (ptr) {
     case 0:
-      telnet.println(AReset);
+      telnet.println(AReset);                     //  no prompt
       break;
     case 1:
-      telnet.print(ABrightYellow + "$" + AReset);
+      telnet.print(ABrightYellow + "$" + AReset); //  main prompt - top level
       break;
     case 2:
-      telnet.print(ABrightCyan + "~" + AReset);
+      telnet.print(ABrightCyan + "~" + AReset);   //  machine related
       break;
     case 3:
-      telnet.print(ABrightRed + ">" + AReset);
+      telnet.print(ABrightRed + ">" + AReset);    //  used by filesystem
       break;
     case 4:
-      telnet.print(ABrightYellow + "-" + AReset);
+      telnet.print(ABrightYellow + "-" + AReset); //  misc.
       break;
     default:
       // if nothing else matches, do this
-      telnet.print(ABrightYellow + "$" + AReset);
+      telnet.print(ABrightYellow + "$" + AReset); //  default prompt
       break;
   }
 }
-
 /*
-  needs work !!!
+  NETWORK *********************************************************************************************************
+  - needs work !!!
   now if you are connected via telnet via the AP then the "No networks found" might make sense
-  but on the other hand, if connected via Router then No Networks found, doesn't get there!!!
+  but on the other hand, if connected via a Router then No Networks found, doesn't get there!!!
 */
 void TelNetScan() {
   SYSTEM_BUSY = true;
-  ResponsePrompt(0, 0, 3); //system prompt
-  telnet.println( AGreen + "Scanning the Local Area Network..." + AReset);
-  // WiFi.scanNetworks will return the number of networks found
+  ResponsePrompt(0, 0, 4); //subsystem prompt
+  telnet.println( ACyan + "Scanning the Local Area Network..." + AReset);
+  ResponsePrompt(0, 0, 4); //subsystem prompt
   int n = WiFi.scanNetworks();
+  telnet.println( ABrightWhite + "Currently there are " + ABrightGreen + String(n) + ABrightWhite + " networks in the neighbourhood" + AReset);
   if (n == 0) {
     //no networks found go AP
     telnet.println(ABrightRed + "No Local Networks Found? - Connect to AP address: 192.168.5.1");
@@ -182,32 +184,41 @@ void TelNetScan() {
       telnet.print(sc);
       telnet.print(ABrightBlue + ":" + AReset);
       if (sn == " " || sn == "") {
-        sn = AYellow + "unknown" + AReset;
+        sn = "unknown";
+        telnet.print(ABrightYellow + sn + AReset);
+      } else {
+        telnet.print(ABrightCyan + sn + AReset);
       }
-      telnet.print(ABrightCyan + sn + AReset);
-      telnet.print(ABrightYellow + " (" + AReset);
+      telnet.print(ABrightYellow + "(" + AReset);
       telnet.print(ss);
       telnet.print(ABrightYellow + ")" + AReset);
-
+      if (sn.length() < 7 ) {
+        telnet.print(tab);
+      }
+      if (sn.length() < 15 ) {
+        telnet.print(tab);
+      }
+      if (sn.length() < 23 ) {
+        telnet.print(tab);
+      }
       if (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) {
-        telnet.println(ABrightGreen + tab + " Open");
+        telnet.println(ABrightGreen + "Open");
       }
       if (WiFi.encryptionType(i) == WIFI_AUTH_WEP) {
-        telnet.println(ARed + tab + " WEP");
+        telnet.println(AMagenta + "WEP");
       }
       if (WiFi.encryptionType(i) == WIFI_AUTH_WPA_PSK) {
-        telnet.println(ARed + tab + " WPA-PSK");
+        telnet.println(ARed + "WPA-PSK");
       }
       if (WiFi.encryptionType(i) == WIFI_AUTH_WPA2_PSK) {
-        telnet.println(ABrightRed + tab + " WPA2-PSK");
+        telnet.println(ABrightRed + "WPA2-PSK");
       }
       if (WiFi.encryptionType(i) == WIFI_AUTH_WPA_WPA2_PSK) {
-        telnet.println(ARed + tab + " WPA-WPA2-PSK");
+        telnet.println(ARed + "WPA-WPA2-PSK");
       }
       if (WiFi.encryptionType(i) == WIFI_AUTH_WPA2_ENTERPRISE) {
-        telnet.println(ABrightMagenta + tab + " WPA2-ENTERPRISE");
+        telnet.println(ABrightMagenta + "WPA2-ENTERPRISE");
       }
-      delay(10);
     }
     LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ viewed networks.");
   }
@@ -216,6 +227,23 @@ void TelNetScan() {
   SYSTEM_BUSY = false;
 }
 /*
+   Displays system network status.
+*/
+
+void TelSysStat() {
+  SYSTEM_BUSY = true;
+  ResponsePrompt(0, 0, 2); //subsystem prompt
+  telnet.println( ACyan + "Status:" + AReset);
+  telnet.println(AYellow + "Current Local Time : " + ABrightWhite + GetASCIITime());
+  telnet.print(ABrightBlue + "Local IP: " + ABrightYellow);
+  telnet.println(WiFi.localIP().toString());
+  telnet.println(AGreen + "Connected to IP Address: " + ABrightRed + telnet.getIP());
+  telnet.println(AReset + "Access Point Address: 192.168.5.1");
+  ResponsePrompt(1, 0, 1); //OK,system prompt
+  SYSTEM_BUSY = false;
+}
+/*
+   FILESYSTEM ***********************************************************************************
    Resursive function to retreive sd card file listing
 */
 void TelFileDirectory(File dir, int numTabs) {
@@ -256,24 +284,146 @@ void TelFileDirectory(File dir, int numTabs) {
     entry.close();
   }
 }
-
 /*
-   Displays system status.
+  ********************************************* List the files on SD card.
 */
-
-void TelSysStat() {
-  SYSTEM_BUSY = true;
-  ResponsePrompt(0, 0, 2); //subsystem prompt
-  telnet.println( ACyan + "Status:" + AReset);
-  telnet.println(AYellow + "Current Local Time : " + ABrightWhite + GetASCIITime());
-  telnet.print(ABrightBlue + "Local IP: " + ABrightYellow);
-  telnet.println(WiFi.localIP().toString());
-  telnet.println(AGreen + "Connected to IP Address: " + ABrightRed + telnet.getIP());
-  telnet.println(AReset + "Access Point Address: 192.168.5.1");
-  ResponsePrompt(1, 0, 1); //OK,system prompt
-  SYSTEM_BUSY = false;
+void TelSysFiles() {
+  telnet.println(ABrightGreen + "SD Card File Listings..." + AReset);
+  //SD.begin();
+  File root = SD.open("/");
+  TelFileDirectory(root, 0);
+  ResponsePrompt(1, 0, 1); //OK, system prompt
 }
 /*
+   ********************************************** Make Dir on SD card
+*/
+void TelMakeDir(String param) {
+  ResponsePrompt(0, 0, 3); //file, no prompt
+  telnet.println("Creating Dir: " + param);
+  if (SD.mkdir(param)) {
+    ResponsePrompt(0, 0, 3); //file, no prompt
+    telnet.println("Dir created");
+  } else {
+    ResponsePrompt(0, 0, 3); //file, no prompt
+    telnet.println("mkdir failed");
+  }
+  ResponsePrompt(1, 0, 1); //ok, top prompt
+}
+/*
+  **************************************************  Delete Dir on SD card
+*/
+void TelRemoveDir(String param) {
+  ResponsePrompt(0, 0, 3); //file , no prompt
+  telnet.println("Removing Dir: " + param);
+  if (SD.rmdir(param)) {
+    ResponsePrompt(0, 0, 3); //file, no prompt
+    telnet.println("Dir removed");
+  } else {
+    ResponsePrompt(0, 0, 3); //file, no prompt
+    telnet.println("rmdir failed");
+  }
+  ResponsePrompt(1, 0, 1); //ok, top prompt
+}
+/*
+  ****************************************************  List a file's contents to the terminal(dump)
+*/
+void TelListFile(String param) {
+  String fn =  '/' + param ;
+  File myfile = SD.open(fn, FILE_READ);
+  // if the file is available, read it:
+  if (myfile) {
+    while (myfile.available()) {
+      telnet.print(myfile.read());
+    }
+    myfile.close();
+    LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ file looked at--> " + param);
+    ResponsePrompt(1, 0, 1); //OK, system prompt
+  } else {
+    ResponsePrompt(0, 0, 2);
+    telnet.println("----fail");
+    LogToSD(AWhite + GetASCIITime() + ABrightRed + " --- list file - fail.");
+    ResponsePrompt(0, 0, 1); // just system prompt
+  }
+}
+/*
+  ********************************************************* Show the system log
+*/
+void TelShowSysLogs() {
+  telnet.println(ACyan + "Logs..." + AReset);
+  ResponsePrompt(0, 0, 2); //subsystem prompt only
+  if (SDCARD_READY) {
+    if (! SD.exists("/syslog.txt")) {
+      telnet.println(ABrightBlue + "creating new logfile..." + AReset);
+      // only open a new file if it doesn't exist
+      File myfile = SD.open("/syslog.txt", FILE_WRITE);
+      String header = ABrightMagenta + "eMBOS -" + ABrightRed + " SYSTEM LOG - " + ABrightCyan + "MASTER";
+      myfile.println(header);
+      myfile.println(ABrightCyan + "System Log Started@:" + AWhite + GetASCIITime());
+      String user = AWhite + GetASCIITime() + tab + ABrightYellow + "Telnet User@" + telnet.getIP() + tab + ABrightGreen + "logged in sucessfully!";
+      myfile.println(user);
+      myfile.close();
+    }
+    telnet.println(ABrightBlue + "-->log found!" + AGreen + " dumping log..." + AReset);
+    String fn = String("/syslog.txt" );
+    File myfile = SD.open(fn, FILE_READ);
+    // if the file is available, read it:
+    if (myfile) {
+      while (myfile.available()) {
+        telnet.print(myfile.read());
+      }
+      myfile.close();
+    } else {
+      ResponsePrompt(0, 0, 2);
+      telnet.println(ABrightRed + "unknown error opening --> syslog.txt" + AReset);
+      ResponsePrompt(1, 3, 1);  //  access denied, system prompt.
+    }
+  }
+  ResponsePrompt(1, 0, 1); //OK, system prompt
+}
+
+/*
+   *********************************************  Delete System logs
+*/
+void TelDeleteSysLogs() {
+  ResponsePrompt(0, 0, 2);// subsystem prompt only
+  telnet.println(ABrightRed + "Deleted, cannot be undone! --> syslog.txt" + AReset);
+  SD.remove("/syslog.txt");
+  ResponsePrompt(1, 0, 1);//  OK, system prompt
+}
+/*
+  ************************************************  SD Card Info
+*/
+void  TelSDCardInfo() {
+  ResponsePrompt(0, 0, 2); // just sub-system prompt
+  telnet.println(ABrightGreen + "SD Card Information" + AReset);
+  uint8_t cardType = SD.cardType();
+  if (cardType == CARD_MMC) {
+    telnet.println(ABrightBlue + "CardType - MMC" + AReset);
+  }
+  else if (cardType == CARD_SD) {
+    telnet.println(ABrightBlue + "CardType - SD" + AReset);
+  }
+  else if (cardType == CARD_SDHC) {
+    telnet.println(ABrightBlue + "CardType - SDHC" + AReset);
+  }
+  else {
+    telnet.println(ABrightRed + "CardType - unknown" + AReset);
+  }
+  int cardSize = SD.cardSize() / (1024 * 1024);
+  int tbu = SD.totalBytes() / (1024 * 1024);
+  int ubu = SD.usedBytes() / (1024 * 1024);
+  String sdcs = String(cardSize);
+  telnet.println(AWhite + "SD Card Size: " + sdcs + " MB");
+  String tb = String(tbu);
+  String ub = String(ubu);
+  telnet.println("Total space: " + tb + " MB");
+  telnet.println("Used space: " + ub + " MB" );
+  ResponsePrompt(1, 0, 1); // OK, system prompt
+}
+
+
+/*
+   MACHINE  ****************************************************************************************
    run the calibration sequence.
 */
 void TelCalibrate() {
@@ -290,7 +440,7 @@ void TelCalibrate() {
   SYSTEM_BUSY = false;
 }
 /*
-  Limits test
+  ********************************************************* Limits test
 */
 void RunLimitsTest() {
   SYSTEM_BUSY = true;
@@ -302,6 +452,7 @@ void RunLimitsTest() {
   SYSTEM_BUSY = false;
 }
 /*
+   SELFTEST ************************************************************************************************
    Selftest Help
 */
 void ShowTestHelp() {
@@ -316,7 +467,7 @@ void ShowTestHelp() {
 }
 
 /*
-   X Motor Test DRV8825
+   *****************************************************  X Motor Test DRV8825
 */
 void RunXTest() {
   SYSTEM_BUSY = true;
@@ -357,7 +508,7 @@ void RunXTest() {
   SYSTEM_BUSY = false;
 }
 /*
-   Y Motor Test DRV8825
+   ******************************************************** Y Motor Test DRV8825
 */
 void RunYTest() {
   SYSTEM_BUSY = true;
@@ -398,7 +549,7 @@ void RunYTest() {
   SYSTEM_BUSY = false;
 }
 /*
-   I2C Bus scan
+   ***********************************************************  I2C Bus scan
 */
 void RunI2CBusScanTest() {
   SYSTEM_BUSY = true;
@@ -409,7 +560,7 @@ void RunI2CBusScanTest() {
   SYSTEM_BUSY = false;
 }
 /*
-  System Diagnostics - motor test, remote test,...
+  ********************************************************* System Diagnostics - motor test, remote test,...
 */
 void TelSelfTest(String command) {
   int se = command.length();
@@ -463,111 +614,9 @@ void TelSelfTest(String command) {
     TestCalibration();
   }
 }
-/*
 
-*/
-void TelSysLogs() {
-  telnet.println(ACyan + "Logs..." + AReset);
-  ResponsePrompt(0, 0, 2); //subsystem prompt only
-  if (SDCARD_READY) {
-    if (! SD.exists("/syslog.txt")) {
-      telnet.println(ABrightBlue + "creating new logfile..." + AReset);
-      // only open a new file if it doesn't exist
-      File root = SD.open("/syslog.txt", FILE_WRITE);
-      String header = ABrightMagenta + "eMBOS -" + ABrightRed + " SYSTEM LOG - " + ABrightCyan + "MASTER";
-      root.println(header);
-      root.println(ABrightCyan + "System Log Started@:" + AWhite + GetASCIITime());
-      String user = AWhite + GetASCIITime() + tab + ABrightYellow + "Telnet User@" + telnet.getIP() + tab + ABrightGreen + "logged in sucessfully!";
-      root.println(user);
-      root.close();
-    }
-    telnet.println(ABrightBlue + "file exists!" + AGreen + " dumping log..." + AReset);
-    File root = SD.open("/syslog.txt", FILE_READ);
-    // if the file is available, read it:
-    if (root) {
-      while (root.available()) {
-        telnet.print(root.read());
-      }
-      root.close();
-    } else {
-      ResponsePrompt(0, 0, 2);
-      telnet.println(ABrightRed + "unknown error opening --> syslog.txt" + AReset);
-      ResponsePrompt(1, 3, 1);  //  access denied, system prompt.
-    }
-  }
-  ResponsePrompt(1, 0, 1); //system prompt
-}
 /*
-   Delete System logs
-*/
-void TelDeleteSysLogs() {
-  ResponsePrompt(0, 0, 2);// subsystem prompt only
-  telnet.println(ABrightRed + "Deleted, cannot be undone! --> syslog.txt" + AReset);
-  SD.remove("/syslog.txt");
-  ResponsePrompt(1, 0, 1);//  OK, system prompt
-}
-/*
-
-*/
-void TelListFile(String param) {
-  SD.begin();
-  File root = SD.open("/" + param, FILE_READ);
-  // if the file is available, read it:
-  if (root) {
-    while (root.available()) {
-      telnet.print(root.read());
-    }
-    root.close();
-    LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ file looked at--> " + param);
-  } else {
-    telnet.println("----fail");
-    LogToSD(AWhite + GetASCIITime() + ABrightRed + " --- list file - fail.");
-    ResponsePrompt(0, 0, 1); // just system prompt
-  }
-
-}
-/*
-
-*/
-void  TelSDCardInfo() {
-  ResponsePrompt(0, 0, 2); // just sub-system prompt
-  telnet.println(ABrightGreen + "SD Card Information" + AReset);
-  uint8_t cardType = SD.cardType();
-  if (cardType == CARD_MMC) {
-    telnet.println(ABrightBlue + "CardType - MMC" + AReset);
-  }
-  else if (cardType == CARD_SD) {
-    telnet.println(ABrightBlue + "CardType - SD" + AReset);
-  }
-  else if (cardType == CARD_SDHC) {
-    telnet.println(ABrightBlue + "CardType - SDHC" + AReset);
-  }
-  else {
-    telnet.println(ABrightRed + "CardType - unknown" + AReset);
-  }
-  int cardSize = SD.cardSize() / (1024 * 1024);
-  int tbu = SD.totalBytes() / (1024 * 1024);
-  int ubu = SD.usedBytes() / (1024 * 1024);
-  String sdcs = String(cardSize);
-  telnet.println(AWhite + "SD Card Size: " + sdcs + " MB");
-  String tb = String(tbu);
-  String ub = String(ubu);
-  telnet.println("Total space: " + tb + " MB");
-  telnet.println("Used space: " + ub + " MB" );
-  ResponsePrompt(1, 0, 1); // OK, system prompt
-}
-/*
-
-*/
-void TelSysFiles() {
-  telnet.println(ABrightGreen + "SD Card File Listings..." + AReset);
-  SD.begin();
-  File root = SD.open("/");
-  TelFileDirectory(root, 0);
-  ResponsePrompt(1, 0, 1); //OK, system prompt
-}
-/*
-
+  ********************************************* Jobs
 */
 void TelSysJobs() {
   telnet.println( AGreen + "Jobs..." + AReset);
@@ -576,7 +625,7 @@ void TelSysJobs() {
   ResponsePrompt(1, 0, 1); //system prompt
 }
 /*
-
+*************************************************** Run
 */
 void TelSysRun(String param) {
   LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ run job --> " + param);
@@ -587,7 +636,7 @@ void TelSysRun(String param) {
 
 }
 /*
-
+********************************************  cancel
 */
 void TelSysCancel(String param) {
   ResponsePrompt(0, 0, 2); //subsystem prompt only
@@ -595,7 +644,7 @@ void TelSysCancel(String param) {
   ResponsePrompt(1, 0, 1); //system prompt
 }
 /*
-
+**********************************  HELP SYSTEM ************************************************
 */
 void TelSysHelp() {
   telnet.println(AClearScreen + AHomeCursor);
@@ -606,13 +655,14 @@ void TelSysHelp() {
   telnet.println();
   telnet.println(AGreen + " netscan" + AWhite + "      - returns scan of network.");
   telnet.println(AGreen + " status" + AWhite + "       - returns complete status on system.");
-  telnet.println(AGreen + " logs" + AWhite + "         - returns the system log.");
-  telnet.println(AGreen + " deletelogs" + AWhite + "   - deletes the system log.");
+  telnet.println(AGreen + " log" + AWhite + "          - system log.");
   telnet.println(AGreen + " clr" + AWhite + "          - clears the screen.");
   telnet.println(AGreen + " run" + AWhite + "          - runs a job on the system.");
   telnet.println(AGreen + " sdcardinfo" + AWhite + "   - returns SD card info.");
   telnet.println(AGreen + " files" + AWhite + "        - list file system on machine.");
   telnet.println(AGreen + " list" + AWhite + "         - dumps file to screen.");
+  telnet.println(AGreen + " mkdir" + AWhite + "        - creates a new directory.");
+  telnet.println(AGreen + " rmdir" + AWhite + "        - deletes named directory.");
   telnet.println(AGreen + " jobs" + AWhite + "         - show available jobs.");
   telnet.println(AGreen + " cancel" + AWhite + "       - cancels job if one is running.");
   telnet.println(AGreen + " selftest" + AWhite + "     - selftest diagnostics on system.");
@@ -632,7 +682,7 @@ void TelSysHelp() {
   ResponsePrompt( 1, 0, 1); //system prompt
 }
 /*
-
+  ***************************************************** MISC  ******************************************
 */
 void TelQuit() {
   telnet.println("Are you sure?");
@@ -648,70 +698,80 @@ void ParseCommand(String command) {
   if (command.length() == 0) {
     ResponsePrompt(1, 5, 1); //unknown - system prompt
   }
-  if (command.startsWith("selftest")) {
+  else if (command.startsWith("selftest")) {
     TelSelfTest(command);
     ResponsePrompt(1, 0, 1);
   }
-  if (command == "sdcardinfo" || command == "sdc" || command == "sdcard" || command == "sdci") {
+  else if (command == "sdcardinfo" || command == "sdc" || command == "sdcard" || command == "sdci") {
     TelSDCardInfo();
   }
-  if (command == "netscan" || command == "net" || command == "nets" || command == "netsc") {
+  else if (command == "netscan" || command == "net" || command == "nets" || command == "netsc") {
     TelNetScan();
   }
-  if (command == "calibrate" || command == "cal" || command == "cali" || command == "calib") {
+  else if (command == "calibrate" || command == "cal" || command == "cali" || command == "calib") {
     TelCalibrate();
   }
-  if (command == "status" || command == "sta" || command == "stat" || command == "statu") {
+  else if (command == "status" || command == "sta" || command == "stat" || command == "statu") {
     TelSysStat();
   }
-  if (command == "clr") {
+  else if (command == "clr") {
     telnet.println(AClearScreen + AHomeCursor);
     ResponsePrompt(0, 0, 1);
   }
-  if (command.startsWith("run")) {
-    int Index1 = command.indexOf(' ');
+  else if (command.startsWith("run")) {
     ResponsePrompt(1, 0, 1);
-    int se = command.length();
-    String m_param = command.substring(Index1, se);
-    telnet.println(ABrightYellow + "JobName: " + ABrightCyan + m_param + AReset);
-    TelSysRun(m_param);
+    String param = command.substring(command.indexOf('-') + 1, command.length());
+    telnet.println(ABrightYellow + "JobName: " + ABrightCyan + param + AReset);
+    TelSysRun(param);
   }
-  if (command == "logs") {
-    TelSysLogs();
+  else if (command.startsWith("log")) {
+    String param = command.substring(command.indexOf('-') + 1, command.length());
+    telnet.println(param);
+    if (param == "del" || param == "DEL"|| param == "delete"|| param == "DELETE") {
+      TelDeleteSysLogs();
+    }
+    else if (param == "l" || param == "L"|| param == "List"|| param == "list") {
+      TelShowSysLogs();
+    }
   }
-  if (command == "deletelogs") {
-    TelDeleteSysLogs();
+  else if (command.startsWith("list")) {
+    ResponsePrompt(1, 0, 3);
+    String param = command.substring(command.indexOf('-'), command.length());
+    telnet.println(ABrightYellow + "FileName: " + ABrightCyan + param + AReset);
+    TelListFile(param);
   }
-  if (command.startsWith("list")) {
-    int Index1 = command.indexOf(' ');
+  else if (command.startsWith("mkdir")) {
     ResponsePrompt(1, 0, 1);
-    int se = command.length();
-    String m_param = command.substring(Index1, se);
-    telnet.println(ABrightYellow + "FileName: " + ABrightCyan + m_param + AReset);
-    TelListFile(m_param);
+    String param = command.substring(command.indexOf('-'), command.length());
+    telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
+    TelMakeDir(param);
   }
-  if (command == "files") {
+  else if (command.startsWith("rmdir")) {
+    ResponsePrompt(1, 0, 1);
+    String param = command.substring(command.indexOf('-'), command.length());
+    telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
+    TelRemoveDir(param);
+  }
+  else if (command == "files") {
     TelSysFiles();
   }
-  if (command == "jobs") {
+  else if (command == "jobs") {
     TelSysJobs();
   }
-  if (command == "cancel") {
-    int Index1 = command.indexOf(' ');
+  else if (command == "cancel") {
     ResponsePrompt(1, 0, 1);
-    int se = command.length();
-    String param = command.substring(Index1, se);
+    String param = command.substring(command.indexOf('-'), command.length());
     telnet.println(ABrightYellow + "Cancel Job: " + ABrightCyan + param + AReset);
     TelSysCancel(param);
     LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --- cancel job --> " + param);
   }
-  if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP" || command == "HELP!") {
+  else if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP" || command == "HELP!") {
     TelSysHelp();
   }
-  if (command.startsWith("#")) {
+  else if (command.startsWith("#")) {
     ResponsePrompt(1, 0, 1); //system prompt
   }
-  if (command.startsWith("W>")) {
+  else if (command.startsWith("W>")) {
     int se = command.length();
     int xTag = command.indexOf('X:');
     int yTag = command.indexOf('Y:', xTag + 1);
@@ -727,7 +787,7 @@ void ParseCommand(String command) {
     ResponsePrompt(1, 0, 1);
 
   }
-  if (command.startsWith("G>")) {
+  else if (command.startsWith("G>")) {
     int se = command.length();
     int xTag = command.indexOf('X:');
     int yTag = command.indexOf('Y:', xTag + 1);
@@ -743,33 +803,27 @@ void ParseCommand(String command) {
     ResponsePrompt(1, 0, 1);
   }
 
-  if (command.startsWith("M>")) {
-    int Index1 = command.indexOf(' ');
+  else if (command.startsWith("M>")) {
     ResponsePrompt(1, 0, 1);
-    int se = command.length();
-    String m_param = command.substring(Index1, se);
-    telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + m_param + ".msf" + AReset);
+    String param = command.substring(command.indexOf(' '), command.length());
+    telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + param + ".msf" + AReset);
     ResponsePrompt(1, 0, 1);
   }
 
-  if (command.startsWith("T>")) {
-    int Index1 = command.indexOf(' ');
+  else if (command.startsWith("T>")) {
     ResponsePrompt(1, 0, 1);
-    int se = command.length();
-    String t_param = command.substring(Index1, se);
+    String t_param = command.substring(command.indexOf(' '), command.length());
     telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
     ResponsePrompt(1, 0, 1);
   }
-  if (command.startsWith("C>")) {
+  else if (command.startsWith("C>")) {
     if (MachineRun) {
       telnet.println(ABrightRed + "Job Paused" + AReset);
       ResponsePrompt(1, 0, 1);
     }
   }
-  if (command.startsWith("V>")) {
-    int idx = command.indexOf(' ');
-    int se = command.length();
-    String blablabla = command.substring(idx + 1, idx + 2);
+  else if (command.startsWith("V>")) {
+    String blablabla = command.substring(command.indexOf(' '), command.length());
     if (blablabla == "0" ) {
       Verbosity = false;
     } else {
@@ -780,15 +834,16 @@ void ParseCommand(String command) {
 
 }
 /*
- * *************************************************************************************************
+ * *********************************  TELNET SETUP & FUNCTIONS ***********************************************
 */
 // callback functions for telnet events
 void OnTelnetConnect(String ip) {
   telnet.println(AClearScreen);
   telnet.println(AHomeCursor);
   telnet.print(ABrightCyan + ABold + sman_sym);
-  telnet.println( ABrightRed + ABold + " " + pat_sym + " " + ASlowBlink + "eMBOS" + ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + " V1.1"   + AReset);
-  telnet.println(" " + ABrightYellow + cr_sym + ABrightCyan + "ETM Studios" + ABrightGreen + " All Rights Reserved 2021   " + ard_sym );
+  telnet.print( ABrightRed + ABold + " " + pat_sym + " " + ASlowBlink + "eMBOS" + AReset);
+  telnet.println(ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + " V1.1" + AReset);
+  telnet.println(" " + ABrightYellow + cr_sym + ABrightCyan + "ETM Studios" + ABrightGreen + " All Rights Reserved 2021/2022");
   telnet.print(ABrightCyan + " System Local Time: ");
   String nt = String(GetASCIITime());
   telnet.println(AWhite + nt );
@@ -797,7 +852,7 @@ void OnTelnetConnect(String ip) {
   String user = AWhite + GetASCIITime() + tab + ABrightYellow + "Telnet User@" + telnet.getIP() + tab + ABrightGreen + "logged in sucessfully!";
   LogToSD(user);
   telnet.println(AGreen + " Type '?' or 'help' for commands" + AReset);
-  telnet.println("(Use ^] + q  to disconnect.)");
+  //telnet.println(" (Use ^] + q  to disconnect.)");
   ResponsePrompt(1, 0, 1);
   DrawBanner();
   display1.setCursor(45, 15);

@@ -471,7 +471,7 @@ void ShowTestHelp() {
 */
 void RunXTest() {
   SYSTEM_BUSY = true;
-  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> x-motor test.");
+  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> x-motor test started.");
   ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test X axis!" + AReset);
   telnet.println(ABrightYellow + "reverse - 1/1 step!" + AReset);
@@ -512,7 +512,7 @@ void RunXTest() {
 */
 void RunYTest() {
   SYSTEM_BUSY = true;
-  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> y-motor test.");
+  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> y-motor test started.");
   ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test Y axis!" + AReset);
   telnet.println(ABrightYellow + "reverse - 1/1 step!" + AReset);
@@ -555,7 +555,7 @@ void RunI2CBusScanTest() {
   SYSTEM_BUSY = true;
   ResponsePrompt(1, 0, 2); //OK, subsystem prompt only
   telnet.println(ABrightYellow + "Running i2c bus scan!.. Standby." + AReset);
-  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> i2c test done.");
+  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> i2c test started.");
   ResponsePrompt(1, 3, 1); //Access Denied!, system prompt
   SYSTEM_BUSY = false;
 }
@@ -586,7 +586,7 @@ void TelSelfTest(String command) {
     if (p2 == "-X" || p2 == "-x") {
       RunXTest();
     }
-    if (p2 == "Y" || p2 == "y") {
+    if (p2 == "-Y" || p2 == "-y") {
       RunYTest();
     }
     if (p2 == "B" || p2 == "b") {
@@ -736,19 +736,19 @@ void ParseCommand(String command) {
   }
   else if (command.startsWith("list")) {
     ResponsePrompt(1, 0, 3);
-    String param = command.substring(command.indexOf('-'), command.length());
+    String param = command.substring(command.indexOf('-') + 1, command.length());
     telnet.println(ABrightYellow + "FileName: " + ABrightCyan + param + AReset);
     TelListFile(param);
   }
   else if (command.startsWith("mkdir")) {
     ResponsePrompt(1, 0, 1);
-    String param = command.substring(command.indexOf('-'), command.length());
+    String param = command.substring(command.indexOf('-') + 1, command.length());
     telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
     TelMakeDir(param);
   }
   else if (command.startsWith("rmdir")) {
     ResponsePrompt(1, 0, 1);
-    String param = command.substring(command.indexOf('-'), command.length());
+    String param = command.substring(command.indexOf('-') + 1, command.length());
     telnet.println(ABrightYellow + "Directory: " + ABrightCyan + param + AReset);
     TelRemoveDir(param);
   }
@@ -760,7 +760,7 @@ void ParseCommand(String command) {
   }
   else if (command == "cancel") {
     ResponsePrompt(1, 0, 1);
-    String param = command.substring(command.indexOf('-'), command.length());
+    String param = command.substring(command.indexOf('-') + 1, command.length());
     telnet.println(ABrightYellow + "Cancel Job: " + ABrightCyan + param + AReset);
     TelSysCancel(param);
     LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --- cancel job --> " + param);
@@ -805,14 +805,14 @@ void ParseCommand(String command) {
 
   else if (command.startsWith("M>")) {
     ResponsePrompt(1, 0, 1);
-    String param = command.substring(command.indexOf(' '), command.length());
+    String param = command.substring(command.indexOf(' ') + 1, command.length());
     telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + param + ".msf" + AReset);
     ResponsePrompt(1, 0, 1);
   }
 
   else if (command.startsWith("T>")) {
     ResponsePrompt(1, 0, 1);
-    String t_param = command.substring(command.indexOf(' '), command.length());
+    String t_param = command.substring(command.indexOf(' ') + 1, command.length());
     telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
     ResponsePrompt(1, 0, 1);
   }
@@ -823,7 +823,7 @@ void ParseCommand(String command) {
     }
   }
   else if (command.startsWith("V>")) {
-    String blablabla = command.substring(command.indexOf(' '), command.length());
+    String blablabla = command.substring(command.indexOf(' ') + 1, command.length());
     if (blablabla == "0" ) {
       Verbosity = false;
     } else {

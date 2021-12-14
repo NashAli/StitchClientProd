@@ -205,16 +205,31 @@ const int httpPort = 80;
 const int serverPort = 4080;
 const char* ssidAP = "STITCH";
 const char* appwd = "sewpatch";
-char* ssid     = "ETMS";      //  add your own credentials.
-char* password = "dodobird";  //  here.
 const char* ntpServer = "ca.pool.ntp.org";
 const int LOCAL_TIME_OFFSET = -5;
 const long utcOffsetInSeconds = 3600 * LOCAL_TIME_OFFSET;
+unsigned long startMillis;
+unsigned long currentMillis;
 
+// bluetooth vars
+String buffer_in;
+unsigned long previousMillis = 0;
+byte valu;
+int addr = 0;
+byte indS = 0;
+byte indP = 0;
+String stream;
+byte len = 0;
+String temp;
+String temp2;
+unsigned int interval = 30000;
+
+BluetoothSerial bt; //Object for Bluetooth
 IPAddress ip;
 WiFiServer server(httpPort);  //  setup the http server
 WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
+
 
 #endif

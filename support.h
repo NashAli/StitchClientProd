@@ -476,33 +476,113 @@ bool noLocal() {
 bool isConnected() {
   return (WiFi.status() == WL_CONNECTED);
 }
-
-
-/*
-    Attach to the network
-*/
-void JoinLocalNetwork() {
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.begin(ssid, password);
-  while (!isConnected()) {
-    delay(1000);
-    DrawBanner();
-    display1.setCursor(10, 15);
-    display1.print("Connecting to the");
-    display1.setCursor(10, 25);
-    display1.print("local network...");
-    display1.setCursor(10, 50);
-    display1.print("Please standby...");
-    display1.display();
+bool check_wifiUpdate() {
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+    Serial.println("30 Seconds Over");
+    return true;
   }
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
-  timeClient.begin();
-  delay(50);
-  timeClient.update();
-  display1.clearDisplay();
-  ShowWifi();
+  //Check if we receive anything from Bluetooth
+  else if (bt.available()) {
+    interval = 50000;
+    buffer_in = bt.readStringUntil('\n'); //Read what we recevive
+    Serial.println("Received:");
+    Serial.println(buffer_in);
+    delay(20);
+    if (buffer_in.charAt(0) == 'S') {
+      for (int i = 0; i < buffer_in.length(); i++) {
+        valu = (byte)(buffer_in.charAt(i));
+        Serial.println("value: " + valu);
+        EEPROM.write(addr, valu);
+        addr++;
+      }
+      Serial.print("New ");
+      Serial.print(buffer_in);
+      EEPROM.write(addr, 10);
+      addr++;
+      EEPROM.commit();
+      bt.println("SSID Stored");
+    }
+    else if (buffer_in.charAt(0) == 'P') {
+      for (int i = 0; i < buffer_in.length(); i++)
+      { valu = (byte)(buffer_in.charAt(i));
+        Serial.println("value " + valu);
+        EEPROM.write(addr, valu);
+        addr++;
+      }
+      Serial.print("New ");
+      Serial.print(buffer_in);
+      EEPROM.write(addr, 10);
+      EEPROM.commit();
+      bt.println("Password Stored");
+      return true;
+    }
+    return false;
+  } else {
+    return false;
+  }
 }
+/*
+
+*/
+void ConfigNetwork() {
+  ShowBT();
+  EEPROM.begin(25);
+  Serial.println("Bluetooth Device is Ready to Pair");
+  Serial.println("Waiting 30 seconds for Wifi Updates.");
+  bt.begin("eMBOS");
+  while (!check_wifiUpdate()) {}
+  Serial.println("The Stored Wifi credentials are : ");
+  for (int i = 0; i < 25; i++) {
+    valu = EEPROM.read(i);
+    stream += (char)valu;
+    if ((valu == 10) && (indS == 0))
+    {
+      indS = i;
+      Serial.println("indS" + (String)i);
+    }
+    else if (valu == 10 && indP == 0)
+    {
+      indP = i;
+      break;
+      Serial.println("indP" + (String)i);
+    }
+  }
+  Serial.println(stream);
+  Serial.println("Stream Ended");
+  temp = stream.substring(0, indS);
+  temp = temp.substring(1, indS);
+  //ssid2=ssid;
+  temp2 = stream.substring(indS + 1, indP);
+  temp2 = temp2.substring(1, indP - indS);
+  int i = temp.length();
+  int j = temp2.length();
+  char ssid[i];
+  char passw[j];
+  temp.toCharArray(ssid, i);
+  temp2.toCharArray(passw, j);
+  Serial.println("Stored SSID");
+  Serial.println(ssid);
+  Serial.println("Stored PASS");
+  Serial.println(passw);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, passw);
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+    Serial.println("WiFi Failed");
+    while (1) {
+      delay(1000);
+    }
+  } else {
+    timeClient.begin();
+    delay(50);
+    timeClient.update();
+    Serial.print("Wifi Connected to ");
+    Serial.println(ssid);
+  }
+}
+
+
 bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, int pause = 500) {
   int i = 0;
   WiFi.mode(WIFI_STA);
@@ -676,18 +756,20 @@ void ScanI2CBus() {
         display1.display();
       }
     }
-    if (nDevices == 0) {
-      DrawBanner();
-      display1.setCursor(10, lastRow);
-      display1.print("No I2C devices found");
-      display1.display();
-    } else {
-      display1.setCursor(10, lastRow);
-      display1.print("That's all. Done.");
-      display1.display();
-    }
+  }
+  if (nDevices == 0) {
+    DrawBanner();
+    display1.setCursor(10, lastRow);
+    display1.print("No I2C devices found");
+    display1.display();
+  } else {
+    display1.setCursor(10, lastRow);
+    display1.print("That's all. Done.");
+    display1.display();
   }
 }
+
+
 /*
 
 */

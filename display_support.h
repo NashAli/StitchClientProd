@@ -112,6 +112,20 @@ void ShowLimits() {
 /*
 
 */
+void ShowBT() {
+  DrawBanner();
+  display1.setCursor(10, 20);
+  display1.print("Bluetooth active!");
+  display1.setCursor(30, 35);
+  display1.print("30 sec");
+  display1.setCursor(10, 50);
+  display1.print("Enter your creds");
+  display1.display();
+}
+
+/*
+
+*/
 void ShowPosition() {
   DrawBanner();
   display1.setCursor(20, 20);

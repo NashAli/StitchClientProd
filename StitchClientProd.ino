@@ -41,16 +41,18 @@
   773,494 bytes  Program (59%)
   045,180 bytes RAM (13%)
 
-  15:21   12/13/2021
-  776,466 bytes  Program (59%)
-  045,180 bytes RAM (13%)
+  09:03   12/14/2021
+  781,674 bytes  Program (59%)
+  045,188 bytes RAM (13%)
 */
 
 
 #include <Wire.h>
+#include <EEPROM.h>
 #include <WiFi.h>                 //  Wifi
 #include <WiFiClient.h>           //  HTTP
 #include <WiFiAP.h>               //  AP
+#include "BluetoothSerial.h"      //  BT for login
 //#include "libssh_esp32.h"       //  SSH
 #include <NTPClient.h>            //  time server
 #include <time.h>                 //  standard time stuff
@@ -64,18 +66,18 @@
 
 
 void setup() {
-  Serial.begin(115200);
   // put your setup code here, to run once:
-  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(115200);
   InitDisplay();
+  ConfigNetwork();
+  pinMode(LED_BUILTIN, OUTPUT);
+  
   ScanI2CBus();
   //InitializeSensorGroup();
   InitializeSDCard(SDCardSelect);
   InitMotorsPort();
   InitControllerPort();
-  //ScanNetworks();
-  JoinLocalNetwork();
-  InitAP();
+  //InitAP();
   SetupTelnet();
   InitFTP();
   //StartSSH();

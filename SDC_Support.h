@@ -155,8 +155,8 @@ void CheckSDCard(int cs)
   } else {
     SDCARD_READY = true;
     display1.setCursor(5, 20);
-    display1.print("A card is present.");
-
+    display1.print("Card is present.");
+    delay(500);
   }
   // print the type of card
   switch (SD.cardType()) {

@@ -202,6 +202,7 @@ const int touch_threshold = 20;
 // variable for storing the touch pin temporary value
 int touchValue;
 const int httpPort = 80;
+const int telnetPort = 23;
 const int serverPort = 4080;
 const char* ssidAP = "STITCH";
 const char* appwd = "sewpatch";

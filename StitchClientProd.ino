@@ -67,11 +67,10 @@
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
+  Serial.begin(115200);     //  for testing & debug
   InitDisplay();
   ConfigNetwork();
   pinMode(LED_BUILTIN, OUTPUT);
-  
   ScanI2CBus();
   //InitializeSensorGroup();
   InitializeSDCard(SDCardSelect);

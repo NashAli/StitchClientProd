@@ -527,7 +527,7 @@ bool check_wifiUpdate() {
 
 */
 void ConfigNetwork() {
-  ShowBT();
+  ShowBTStart();
   EEPROM.begin(25);
   Serial.println("Bluetooth Device is Ready to Pair");
   Serial.println("Waiting 30 seconds for Wifi Updates.");
@@ -562,14 +562,13 @@ void ConfigNetwork() {
   char passw[j];
   temp.toCharArray(ssid, i);
   temp2.toCharArray(passw, j);
-  Serial.println("Stored SSID");
-  Serial.println(ssid);
-  Serial.println("Stored PASS");
-  Serial.println(passw);
+  ShowWifiCreds(ssid, passw);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passw);
+  //connectToWiFi(ssid,passw);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    Serial.println("WiFi Failed");
+    //Serial.println("WiFi Failed");
+    ShowMessage("No WiFi available");
     while (1) {
       delay(1000);
     }
@@ -577,12 +576,14 @@ void ConfigNetwork() {
     timeClient.begin();
     delay(50);
     timeClient.update();
-    Serial.print("Wifi Connected to ");
-    Serial.println(ssid);
+    ShowWifi();
+    ShowTime();
   }
 }
 
-
+/*
+   not used!
+*/
 bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, int pause = 500) {
   int i = 0;
   WiFi.mode(WIFI_STA);

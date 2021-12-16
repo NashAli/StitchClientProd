@@ -76,7 +76,7 @@ void setup() {
   InitializeSDCard(SDCardSelect);
   InitMotorsPort();
   InitControllerPort();
-  //InitAP();
+  //StartAP();
   SetupTelnet();
   InitFTP();
   //StartSSH();

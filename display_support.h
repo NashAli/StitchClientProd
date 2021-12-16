@@ -100,7 +100,7 @@ void DrawBanner() {
 */
 void ShowMessage(String message) {
   DrawBanner();
-  display1.setCursor(5, 40);
+  display1.setCursor(10, 50);
   display1.print(message);
   display1.display();
   delay(1000);
@@ -136,11 +136,11 @@ void ShowWifiCreds(String ssid, String passw) {
   DrawBanner();
   display1.setCursor(10, 20);
   display1.print("Connecting to..");
-  display1.setCursor(10, 40);
-  display1.print("Station: ");
+  display1.setCursor(5, 30);
+  display1.print("Station:");
   display1.println(ssid);
-  display1.setCursor(10, 50);
-  display1.print("Password: ");
+  display1.setCursor(5, 40);
+  display1.print("Password:");
   display1.println(passw);
   display1.display();
   delay(1000);

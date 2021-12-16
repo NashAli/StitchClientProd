@@ -57,6 +57,21 @@ MCP23017 acp = MCP23017(AuxControl);
 //  These are the operational routines for STITCH
 /* -------------------------- MCP23017 INIT ------------------------------------------------------- */
 /*
+   Dear Complier, Error Messages, please let's have none of those.
+   I think you're ignoring me!
+*/
+void errorMsg(String error, bool restart = true) {
+  if (restart) {
+    DrawBanner();
+    display1.setCursor(5, 15);
+    display1.print(error);
+    display1.display();
+    delay(2000);
+    ESP.restart();
+    delay(2000);
+  }
+}
+/*
    TIMESTAMP for logs
 */
 String GetASCIITime() {
@@ -447,21 +462,8 @@ void EStopMachine() {
   delay(5000);
   display1.stopscroll();
 }
-/*
-   Dear Complier, Error Messages, please let's have none of those.
-   I think you're ignoring me!
-*/
-void errorMsg(String error, bool restart = true) {
-  if (restart) {
-    DrawBanner();
-    display1.setCursor(7, 15);
-    display1.print("Rebooting in 2 sec.");
-    delay(2000);
-    ESP.restart();
-    delay(2000);
-  }
-}
-//  Let's start with some network basic communications... telnet,http,ssh,ftp...
+
+//  Let's start with some network basic communications... bluetooth, telnet, http, ssh, ftp...
 /* ---------------------------- NETWORK ----------------------------------------------------- */
 /*
    Tests for an available network to which the SewMachine may connect with. If none is found
@@ -476,46 +478,80 @@ bool noLocal() {
 bool isConnected() {
   return (WiFi.status() == WL_CONNECTED);
 }
+
+/*
+  This initializes the AP setup. This can be done with or without an available network. Typically
+  if no network is found or none available to connect to; the SewMachine AP will be activated for
+  communications.
+*/
+void StartAP() {
+  // Setting the ESP as an access point
+  // Remove the password parameter, if you want the AP (Access Point) to be open
+  WiFi.softAP(ssidAP, appwd, 13, 0, 1);
+  //wait for SYSTEM_EVENT_AP_START
+  delay(200);
+  if (!WiFi.softAPConfig(IPAddress(192, 168, 5, 1), IPAddress(192, 168, 5, 1), IPAddress(255, 255, 255, 0))) {
+    DrawBanner();
+    display1.setCursor(10, 20);
+    display1.print("AP Setup Failed!");
+    display1.display();
+  }
+  IPAddress APIP = WiFi.softAPIP();
+  server.begin();
+  DrawBanner();
+  display1.setCursor(20, 20);
+  display1.print("AP IP address:");
+  display1.setCursor(30, 35);
+  display1.print(APIP);
+  ShowTime();
+  display1.display();
+
+}
+
+
+
+/*
+   Bluetooth connect
+*/
 bool check_wifiUpdate() {
   unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    Serial.println("30 Seconds Over");
     return true;
   }
   //Check if we receive anything from Bluetooth
   else if (bt.available()) {
     interval = 50000;
     buffer_in = bt.readStringUntil('\n'); //Read what we recevive
-    Serial.println("Received:");
-    Serial.println(buffer_in);
     delay(20);
-    if (buffer_in.charAt(0) == 'S') {
-      for (int i = 0; i < buffer_in.length(); i++) {
-        valu = (byte)(buffer_in.charAt(i));
-        Serial.println("value: " + valu);
+
+    if (buffer_in.startsWith("Connect:")) {
+      int sTag = buffer_in.indexOf('Connect:') + 1;
+      int seTag = buffer_in.indexOf(',');
+      int pTag = buffer_in.indexOf(',') + 1;
+      String s_param = buffer_in.substring(sTag, seTag);
+      String p_param = buffer_in.substring(pTag, buffer_in.length() - 1);
+      bt.println("Station:" + s_param );
+      bt.println("Password:" + p_param);
+      bt.println( "will be stored in EEPROM...");
+      addr = 0;
+      for (int i = 0; i < s_param.length(); i++) {
+        valu = (byte)(s_param.charAt(i));
         EEPROM.write(addr, valu);
         addr++;
       }
-      Serial.print("New ");
-      Serial.print(buffer_in);
-      EEPROM.write(addr, 10);
+      EEPROM.write(addr, 0x0A);
+      addr++;
+      for (int i = 0; i < p_param.length(); i++) {
+        valu = (byte)(p_param.charAt(i));
+        EEPROM.write(addr, valu);
+        addr++;
+      }
+      EEPROM.write(addr, 0x0A);
       addr++;
       EEPROM.commit();
-      bt.println("SSID Stored");
-    }
-    else if (buffer_in.charAt(0) == 'P') {
-      for (int i = 0; i < buffer_in.length(); i++)
-      { valu = (byte)(buffer_in.charAt(i));
-        Serial.println("value " + valu);
-        EEPROM.write(addr, valu);
-        addr++;
-      }
-      Serial.print("New ");
-      Serial.print(buffer_in);
-      EEPROM.write(addr, 10);
-      EEPROM.commit();
-      bt.println("Password Stored");
+      bt.println("SSID & Password Stored!");
+      bt.println("Network setup complete!");
       return true;
     }
     return false;
@@ -529,33 +565,17 @@ bool check_wifiUpdate() {
 void ConfigNetwork() {
   ShowBTStart();
   EEPROM.begin(25);
-  Serial.println("Bluetooth Device is Ready to Pair");
-  Serial.println("Waiting 30 seconds for Wifi Updates.");
   bt.begin("eMBOS");
   while (!check_wifiUpdate()) {}
-  Serial.println("The Stored Wifi credentials are : ");
+  //read eeprom
   for (int i = 0; i < 25; i++) {
     valu = EEPROM.read(i);
     stream += (char)valu;
-    if ((valu == 10) && (indS == 0))
-    {
-      indS = i;
-      Serial.println("indS" + (String)i);
-    }
-    else if (valu == 10 && indP == 0)
-    {
-      indP = i;
-      break;
-      Serial.println("indP" + (String)i);
-    }
   }
-  Serial.println(stream);
-  Serial.println("Stream Ended");
-  temp = stream.substring(0, indS);
-  temp = temp.substring(1, indS);
-  //ssid2=ssid;
-  temp2 = stream.substring(indS + 1, indP);
-  temp2 = temp2.substring(1, indP - indS);
+  int seTag = stream.indexOf(0x0A);
+  int peTag = stream.indexOf(0x0A, seTag + 2);
+  temp = stream.substring(0, seTag + 1);
+  temp2 = stream.substring(seTag + 1, peTag + 1 );
   int i = temp.length();
   int j = temp2.length();
   char ssid[i];
@@ -563,15 +583,14 @@ void ConfigNetwork() {
   temp.toCharArray(ssid, i);
   temp2.toCharArray(passw, j);
   ShowWifiCreds(ssid, passw);
+  delay(5000);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passw);
   //connectToWiFi(ssid,passw);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    //Serial.println("WiFi Failed");
     ShowMessage("No WiFi available");
-    while (1) {
-      delay(1000);
-    }
+    delay(1000);
+    StartAP();
   } else {
     timeClient.begin();
     delay(50);
@@ -597,34 +616,7 @@ bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, i
 }
 
 
-/*
-  This initializes the AP setup. This can be done with or without an available network. Typically
-  if no network is found or none available to connect to; the SewMachine AP will be activated for
-  communications.
-*/
-void InitAP() {
-  // Setting the ESP as an access point
-  // Remove the password parameter, if you want the AP (Access Point) to be open
-  WiFi.softAP(ssidAP, appwd, 13, 0, 1);
-  //wait for SYSTEM_EVENT_AP_START
-  delay(200);
-  if (!WiFi.softAPConfig(IPAddress(192, 168, 5, 1), IPAddress(192, 168, 5, 1), IPAddress(255, 255, 255, 0))) {
-    DrawBanner();
-    display1.setCursor(10, 20);
-    display1.print("AP Setup Failed!");
-    display1.display();
-  }
-  IPAddress APIP = WiFi.softAPIP();
-  server.begin();
-  DrawBanner();
-  display1.setCursor(20, 20);
-  display1.print("AP IP address:");
-  display1.setCursor(30, 35);
-  display1.print(APIP);
-  ShowTime();
-  display1.display();
 
-}
 /*
   SSH Start.
 */

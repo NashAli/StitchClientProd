@@ -1067,10 +1067,6 @@ void SetupTelnet() {
     display1.print("service running");
     display1.display();
   } else {
-    display1.setCursor(45, 25);
-    display1.print("system will reboot");
-    display1.display();
-    delay(2000);
     errorMsg("Will reboot...");
   }
 }

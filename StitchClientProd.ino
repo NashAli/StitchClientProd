@@ -34,16 +34,16 @@
   DRV8825 - stepper motor driver PCB
 
   12:13   12/10/2021
-  759,826 bytes Program (57%)
+  759,826 bytes Program
   045,036 bytes Ram (14%)
 
-  16:50   12/12/2021
-  773,494 bytes  Program (59%)
+  16:50   12/12/2021  - running!
+  773,494 bytes  Program
   045,180 bytes RAM (13%)
 
-  09:03   12/14/2021
-  781,674 bytes  Program (59%)
-  045,188 bytes RAM (13%)
+  19:21   12/16/2021  - added BlueTooth serial support.
+  1,471,158 bytes  Program (~46%) (Max 3,145,728 bytes)
+  058,988 bytes RAM (18%)
 */
 
 
@@ -70,6 +70,7 @@ void setup() {
   Serial.begin(115200);     //  for testing & debug
   InitDisplay();
   ConfigNetwork();
+  pinMode(WorkLights, OUTPUT);           // set pin to output
   pinMode(LED_BUILTIN, OUTPUT);
   ScanI2CBus();
   //InitializeSensorGroup();
@@ -86,7 +87,9 @@ void setup() {
 }
 
 void loop() {
-  CheckStatus();
+  if (LIMITS_FLAG) {
+    CheckStatus();
+  }
   touchValue = touchRead(EstopPin);
   if (touchValue < touch_threshold) {
     EStopMachine();

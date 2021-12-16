@@ -146,6 +146,7 @@ String OSNAME = "eMB-OS V1.1";
 /*
    ANSI Terminal ESC sequences
 */
+String ADarkGrey ="\u001b[1;30m";
 String ABlack =  "\u001b[30m";
 String ARed =  "\u001b[31m";
 String AGreen =  "\u001b[32m";
@@ -155,7 +156,6 @@ String AMagenta =  "\u001b[35m";
 String ACyan =  "\u001b[36m";
 String AWhite =  "\u001b[37m";
 String AReset =  "\u001b[0m";
-
 String ABrightBlack = "\u001b[30;1m";
 String ABrightRed = "\u001b[31;1m";
 String ABrightGreen = "\u001b[32;1m";
@@ -168,39 +168,48 @@ String ABrightWhite = "\u001b[37;1m";
 String ABold = "\u001b[1m";
 String AClearScreen = "\u001b[2J";
 String AHomeCursor = "\u001b[;H";
-
 String ASlowBlink = "\u001b[5m";
-String revso_sym = "\u005c";
+String AReverse = "\u001b[7m";
+String AUnderline = "\u001b[4m";
+String AUpaline = "\u001b[1A";
 String tab = "\u0009";
 String nl = "\n";
 String cr = "\r";
+
+
+// unicode symbols
+String revso_sym = "\u005c";
 String cr_sym =  "\u00A9";
 String pat_sym =  "\u1360";
 String tm_sym =  "\u2122";
 String ard_sym =  "\u267E";
 String sman_sym =  "\u26C4";
 String golf_sym =  "\u26F3";
-String upaline = "\u001B[1A";
+
+//  machine vars
 
 int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET, SXHOME, SYHOME;
-bool SYSTEM_BUSY = false;     //  OS is busy
-bool MachineRun = false;      //  a motor is cycling (X-Y-Z)
-bool Verbosity = true;        //  setting for communications protocol.
-bool NeedleUp = false;        //
-bool NeedleDown = false;      //
+bool SYSTEM_BUSY = false;     //  OS is busy.
+bool MachineRun = false;      //  a motor is cycling (X-Y-Z).
+bool LIMITS_FLAG = false;    //  a boundary has been breached.
+bool NeedleUp = false;        //  logic to manage the needle (Z) to keep it out of
+bool NeedleDown = false;      //  harms way when the fabric gantry is in motion.
 bool Forward = true;          //  direction logic for DRV8845
 bool CalGood = false;         //  calibration has been completed sucessfully.
-bool LIMITS_FAULT = false;    //  a boundary has been breached.
 
-uint8_t limits, comval;
+bool Verbosity = true;        //  setting for communications protocol. Application can control response type ALPHA/NUMERIC
+
+uint8_t limits, comval;       //  read mcp23017 ports' values.
 const int EstopPin = 4;       //  GPIO4 - EMERGENCY STOP PIN !!
 const int SDCardSelect = 5;   //  GPIO5 on esp32
 const int WorkLights = 34;    //  GPIO34 - work lights via the ULN2803A
 int MWAIT = 10;               //  motor wait timing
+
 // change your threshold value here
 const int touch_threshold = 20;
 // variable for storing the touch pin temporary value
 int touchValue;
+
 const int httpPort = 80;
 const int telnetPort = 23;
 const int serverPort = 4080;
@@ -217,10 +226,7 @@ String buffer_in;
 unsigned long previousMillis = 0;
 byte valu;
 int addr = 0;
-byte indS = 0;
-byte indP = 0;
 String stream;
-byte len = 0;
 String temp;
 String temp2;
 unsigned int interval = 30000;

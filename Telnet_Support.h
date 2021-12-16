@@ -271,9 +271,9 @@ void TelFileDirectory(File dir, int numTabs) {
     } else {
       en.replace("/", "");
       /*
-      if (en.length() < 4) {
+        if (en.length() < 4) {
         telnet.print(tab);
-      }
+        }
       */
       if (entry.isDirectory()) {
         String enu = String(entry.name());
@@ -722,6 +722,7 @@ void TelSysHelp() {
   telnet.println(AGreen + " cancel" + AWhite + "       - cancels job if one is running.");
   telnet.println(AGreen + " selftest" + AWhite + "     - selftest diagnostics on system.");
   telnet.println(AGreen + " calibrate" + AWhite + "    - runs calibration on system.");
+  telnet.println(AGreen + " worklight" + AWhite + "    - turns on/off a worklight.");
   telnet.println();
   telnet.println(ABrightRed + "    SewMachine Direct Commands:");
   telnet.println();
@@ -894,7 +895,10 @@ void ParseCommand(String command) {
     }
     ResponsePrompt(1, 0, 1);
   }
-
+  else if (command == "worklight") {
+    Lamp(1);
+    ResponsePrompt(0, 0, 1);
+  }
   else if (command == "help" || command == "?" || command == "help?" || command == "Help" || command == "HELP" || command == "HELP!") {
     TelSysHelp();
   }
@@ -982,7 +986,7 @@ void OnTelnetConnect(String ip) {
   telnet.println(AClearScreen);
   telnet.println(AHomeCursor);
   telnet.print(ABrightCyan + ABold + " " + sman_sym);
-telnet.print( ABrightRed + ABold + "          " + pat_sym + " " + ASlowBlink + "eMBOS" + AReset);
+  telnet.print( ABrightRed + ABold + "          " + pat_sym + " " + ASlowBlink + "eMBOS" + AReset);
   telnet.println(ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + " V1.1" + AReset);
   telnet.println(" " + ABrightYellow + cr_sym + ABrightCyan + "ETM Studios" + ABrightGreen + " All Rights Reserved 2021/2022");
   telnet.print(ABrightCyan + " System Local Time: ");

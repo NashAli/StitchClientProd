@@ -58,7 +58,7 @@ MCP23017 acp = MCP23017(AuxControl);
 /* -------------------------- MCP23017 INIT ------------------------------------------------------- */
 /*
    Dear Complier, Error Messages, please let's have none of those.
-   I think you're ignoring me!
+   Please don't ignore me, I think you're ignoring me!
 */
 void errorMsg(String error, bool restart = true) {
   if (restart) {
@@ -72,7 +72,17 @@ void errorMsg(String error, bool restart = true) {
   }
 }
 /*
-   TIMESTAMP for logs
+  ************************************  Logic for the work light.
+*/
+void Lamp(int v) {
+  if (v == 0) {
+    digitalWrite(WorkLights, LOW);
+  } else {
+    digitalWrite(WorkLights, HIGH);       // set pin high
+  }
+}
+/*
+   *************************************  TIMESTAMP for logs.
 */
 String GetASCIITime() {
   time_t rawtime;
@@ -83,6 +93,9 @@ String GetASCIITime() {
   mt.replace("\n", "");
   return mt;
 }
+/*
+ * ****************************************** Init i2c Motors.
+ */
 void InitMotorsPort() {
   if (MOTORS_ACTIVE) {
     mcp.init();
@@ -104,7 +117,9 @@ void InitMotorsPort() {
     delay(500);
   }
 }
-
+/*
+ * ********************************* Init Remote controller.
+ */
 void InitControllerPort() {
   if (AUX_ACTIVE) {
     acp.init();
@@ -126,7 +141,7 @@ void InitControllerPort() {
   }
 }
 /*
-   Dear compiler... please go easy on me today, my morning has been rough.
+   Dear compiler... Am I there yet? Please go easy on me today, my morning has been rough.
 */
 bool IsAtDestination() {
   if ((XPOS = XDEST) && (YPOS = YDEST)) {
@@ -138,7 +153,8 @@ bool IsAtDestination() {
 }
 
 /*
-   Read the limits port A of the MCP23017 Motors control.
+   Read the limits port A of the MCP23017 Motors control. An interrupt can set the flag to read all limits
+   
 */
 void ReadLimits() {
   limits = mcp.readPort(MCP23017Port::A);
@@ -434,8 +450,9 @@ void StitchHere() {
   }
 
 }
-
-
+/*
+ * An interrupt has been fired and a LIMITS_FLAG has been set
+ */
 void CheckStatus() {
 
 }
@@ -764,15 +781,15 @@ void ScanI2CBus() {
 
 
 /*
-
+  *************************************** INTERRUPT HANDLER *****************************
 */
 void IRAM_ATTR CheckLimits() {
   limits = mcp.readPort(MCP23017Port::A);
-  // set a flag for OS, new limits is available.
-  LIMITS_FAULT =  true;
+  // set a flag for OS, new limits is available and needs attention quickly.
+  LIMITS_FLAG = true;
 }
 /*
-
+  
 */
 void InitGPIOInterrupt() {
   pinMode(LimitsIRQ, INPUT_PULLUP);

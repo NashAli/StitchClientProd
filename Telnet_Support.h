@@ -160,19 +160,20 @@ void ResponsePrompt(int rr, int rt, int ptr) {
   but on the other hand, if connected via a Router then No Networks found, doesn't get there!!!
 */
 void TelNetScan() {
-  SYSTEM_BUSY = true;
   ResponsePrompt(0, 0, 4); //subsystem prompt
   telnet.println( ACyan + "Scanning the Local Area Network..." + AReset);
+  int nn = WiFi.scanNetworks();
   ResponsePrompt(0, 0, 4); //subsystem prompt
-  int n = WiFi.scanNetworks();
-  telnet.println( ABrightWhite + "Currently there are " + ABrightGreen + String(n) + ABrightWhite + " networks in the neighbourhood" + AReset);
-  if (n == 0) {
+  telnet.println( ABrightWhite + "Currently there are " + ABrightGreen + String(nn) + ABrightWhite + " networks in the neighbourhood" + AReset);
+  
+  if (nn == 0) {
     //no networks found go AP
     telnet.println(ABrightRed + "No Local Networks Found? - Connect to AP address: 192.168.5.1");
     telnet.println(ABrightGreen + "Open your wifi settings and find the address above." + AReset);
+    LogToSD(AWhite + GetASCIITime() + ABrightRed + " --- no networks found.");
   } else {
     telnet.println(ABrightWhite + "List of available wifi connections:" + AReset);
-    for (int i = 0; i < n; ++i) {
+    for (int i = 0; i < nn; ++i) {
       // Print SSID and RSSI for each network found
       String ss = String( WiFi.RSSI(i));
       String sc = String(i + 1);
@@ -190,7 +191,7 @@ void TelNetScan() {
         telnet.print(ABrightCyan + sn + AReset);
       }
       telnet.print(ABrightYellow + "(" + AReset);
-      telnet.print(ss);
+      telnet.print(ABrightBlue + ss);
       telnet.print(ABrightYellow + ")" + AReset);
       if (sn.length() < 7 ) {
         telnet.print(tab);
@@ -220,19 +221,15 @@ void TelNetScan() {
         telnet.println(ABrightMagenta + "WPA2-ENTERPRISE");
       }
     }
-    LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ viewed networks.");
   }
   telnet.println("");
   ResponsePrompt(1, 0, 1); //OK,system prompt
-  SYSTEM_BUSY = false;
 }
 /*
    Displays system network status.
 */
 
 void TelSysStat() {
-  startMillis = millis();  //initial start time
-  SYSTEM_BUSY = true;
   ResponsePrompt(0, 0, 2); //subsystem prompt
   telnet.println( ACyan + "Status:" + AReset);
   telnet.println(AYellow + "Current Local Time : " + ABrightWhite + GetASCIITime());
@@ -240,11 +237,7 @@ void TelSysStat() {
   telnet.println(WiFi.localIP().toString());
   telnet.println(AGreen + "Connected to IP Address: " + ABrightRed + telnet.getIP());
   telnet.println(AReset + "Access Point Address: 192.168.5.1");
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1); //OK,system prompt
-  SYSTEM_BUSY = false;
 }
 /*
    FILESYSTEM ***********************************************************************************
@@ -302,15 +295,12 @@ void TelFileDirectory(File dir, int numTabs) {
   ********************************************* List the files on SD card.
 */
 void TelSysFiles(String dir) {
-  startMillis = millis();
+
   telnet.println(ABrightGreen + "SD Card File Listings..." + AReset);
   //SD.begin(5);
   File root = SD.open(dir);
   TelFileDirectory(root, 0);
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
-  ResponsePrompt(1, 0, 1); //OK, system prompt
+  ResponsePrompt(1, 0, 1); //OK,system prompt
 }
 /*
    ********************************************** Make Dir on SD card
@@ -409,20 +399,15 @@ void TelShowSysLogs() {
    *********************************************  Delete System logs
 */
 void TelDeleteSysLogs() {
-  startMillis = millis();  //initial start time
   ResponsePrompt(0, 0, 2);// subsystem prompt only
   telnet.println(ABrightRed + "Deleted, cannot be undone! --> syslog.txt" + AReset);
   SD.remove("/syslog.txt");
   ResponsePrompt(1, 0, 1);//  OK, system prompt
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
 }
 /*
   ************************************************  SD Card Info
 */
 void  TelSDCardInfo() {
-  startMillis = millis();
   ResponsePrompt(0, 0, 2); // just sub-system prompt
   telnet.println(ABrightGreen + "SD Card Information" + AReset);
   uint8_t cardType = SD.cardType();
@@ -447,9 +432,6 @@ void  TelSDCardInfo() {
   String ub = String(ubu);
   telnet.println("Total space: " + tb + " MB");
   telnet.println("Used space: " + ub + " MB" );
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1); // OK, system prompt
 }
 
@@ -459,9 +441,7 @@ void  TelSDCardInfo() {
    run the calibration sequence.
 */
 void TelCalibrate() {
-  startMillis = millis();
   telnet.println(ABrightCyan + "Calibrate Machine.." + AReset);
-  SYSTEM_BUSY = true;
   ResponsePrompt(1, 0, 2);  //OK,subsystem prompt
   telnet.println(ABrightRed + "Running Calibration Sequence!! - Standby..." + AReset);
   ShowPosition();
@@ -469,27 +449,17 @@ void TelCalibrate() {
   ResponsePrompt(1, 0, 2);  //OK,subsystem prompt
   telnet.println(ABrightRed + "Calibration Done!" + AReset);
   LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ calibration done.");
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1);  //OK,system prompt
-  SYSTEM_BUSY = false;
 }
 /*
   ********************************************************* Limits test
 */
 void TelLimitsTest() {
-  startMillis = millis();
-  SYSTEM_BUSY = true;
   ShowLimits();
   ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightYellow + "See OLED," + ABrightRed + " done!" + AReset);
   LogToSD(AWhite + GetASCIITime() + ABrightGreen + " --> limits test done.");
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1); //system prompt
-  SYSTEM_BUSY = false;
 }
 /*
    SELFTEST ************************************************************************************************
@@ -511,7 +481,6 @@ void ShowTestHelp() {
 */
 void TelRunXTest() {
   startMillis = millis();
-  SYSTEM_BUSY = true;
   LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> x-motor test started.");
   ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test X axis!" + AReset);
@@ -546,18 +515,12 @@ void TelRunXTest() {
   }
   ResponsePrompt(1, 0, 2); //OK, subsystem prompt
   telnet.println(ABrightGreen + "completed." + AReset);
-  SYSTEM_BUSY = false;
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1);
 }
 /*
    ******************************************************** Y Motor Test DRV8825
 */
 void TelRunYTest() {
-  startMillis = millis();
-  SYSTEM_BUSY = true;
   LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> y-motor test started.");
   ResponsePrompt(0, 0, 2); //subsystem prompt only
   telnet.println(ABrightRed + "running motor test Y axis!" + AReset);
@@ -592,22 +555,16 @@ void TelRunYTest() {
   }
   ResponsePrompt(1, 0, 2); //OK, subsystem prompt
   telnet.println(ABrightGreen + "completed." + AReset);
-  SYSTEM_BUSY = false;
-  currentMillis = millis();  //get the current "time" (actually the number of milliseconds since the program started)
-  String tt = String(currentMillis - startMillis);
-  telnet.println(ABrightRed + "TaskTime: " + tt + " mSec" + AReset);
   ResponsePrompt(1, 0, 1);
 }
 /*
    ***********************************************************  I2C Bus scan
 */
 void TelRunI2CBusScanTest() {
-  SYSTEM_BUSY = true;
   ResponsePrompt(1, 0, 2); //OK, subsystem prompt only
   telnet.println(ABrightYellow + "Running i2c bus scan!.. Standby." + AReset);
   LogToSD(AWhite + GetASCIITime() + ABrightBlue + " --> i2c test started.");
   ResponsePrompt(1, 3, 1); //Access Denied!, system prompt
-  SYSTEM_BUSY = false;
 }
 /*
   ********************************************************* System Diagnostics - motor test, remote test,...
@@ -678,12 +635,11 @@ void TelSysJobs() {
 *************************************************** Run
 */
 void TelSysRun(String param) {
-  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ run job --> " + param);
   telnet.println(ABrightGreen + "Run Job..." + AReset);
   ResponsePrompt(0, 1, 2); //system prompt only
   telnet.println("none to select");
   ResponsePrompt(1, 0, 1); //system prompt
-
+  LogToSD(AWhite + GetASCIITime() + ABrightBlue + " +++ run job --> " + param);
 }
 /*
 ********************************************  cancel
@@ -997,7 +953,6 @@ void OnTelnetConnect(String ip) {
   String user = AWhite + GetASCIITime() + tab + ABrightYellow + "Telnet User@" + telnet.getIP() + tab + ABrightGreen + "logged in sucessfully!";
   LogToSD(user);
   telnet.println(AGreen + " Type '?' or 'help' for commands" + AReset);
-  //telnet.println(" (Use ^] + q  to disconnect.)");
   ResponsePrompt(1, 0, 1);
   DrawBanner();
   display1.setCursor(45, 15);
@@ -1060,7 +1015,6 @@ void SetupTelnet() {
   // passing a lambda function
   telnet.onInputReceived([](String str) {
     // checks for a command entered by user at terminal.
-    while (SYSTEM_BUSY) {}
     ParseCommand(str);
   });
   DrawBanner();
@@ -1074,6 +1028,5 @@ void SetupTelnet() {
     errorMsg("Will reboot...");
   }
 }
-
 
 #endif

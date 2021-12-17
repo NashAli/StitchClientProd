@@ -69,12 +69,12 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);     //  for testing & debug
   InitDisplay();
+  InitializeSDCard(SDCardSelect);
   ConfigNetwork();
   pinMode(WorkLights, OUTPUT);           // set pin to output
   pinMode(LED_BUILTIN, OUTPUT);
   ScanI2CBus();
   //InitializeSensorGroup();
-  InitializeSDCard(SDCardSelect);
   InitMotorsPort();
   InitControllerPort();
   //StartAP();
@@ -86,10 +86,7 @@ void setup() {
   ShowTime();
 }
 
-void loop() {
-  if (LIMITS_FLAG) {
-    CheckStatus();
-  }
+void loop() { 
   touchValue = touchRead(EstopPin);
   if (touchValue < touch_threshold) {
     EStopMachine();

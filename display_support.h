@@ -120,26 +120,35 @@ void ShowLimits() {
   display1.display();
 }
 /*
-
+  The only BT command -> 'Connect:ssid,password'
 */
 void ShowBTStart() {
   DrawBanner();
   display1.setCursor(10, 20);
   display1.print("Bluetooth active!");
   display1.setCursor(30, 35);
-  display1.print("30 seconds");
+  display1.print("for 30 seconds");
   display1.setCursor(5, 50);
   display1.print("Enter your creds now");
+  display1.display();
+  delay(2500);
+  DrawBanner();
+  display1.setCursor(10, 20);
+  display1.print("Bluetooth active!");
+  display1.setCursor(10, 35);
+  display1.print("If done.");
+  display1.setCursor(10, 50);
+  display1.print("Wait for auto-login.");
   display1.display();
 }
 void ShowWifiCreds(String ssid, String passw) {
   DrawBanner();
   display1.setCursor(10, 20);
   display1.print("Connecting to..");
-  display1.setCursor(5, 30);
+  display1.setCursor(5, 40);
   display1.print("Station:");
   display1.println(ssid);
-  display1.setCursor(5, 40);
+  display1.setCursor(5, 50);
   display1.print("Password:");
   display1.println(passw);
   display1.display();

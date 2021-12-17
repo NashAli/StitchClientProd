@@ -58,7 +58,7 @@ MCP23017 acp = MCP23017(AuxControl);
 /* -------------------------- MCP23017 INIT ------------------------------------------------------- */
 /*
    Dear Complier, Error Messages, please let's have none of those.
-   Please don't ignore me, I think you're ignoring me!
+   Please don't ignore me, I think you're ignoring me! I've seen you here before!
 */
 void errorMsg(String error, bool restart = true) {
   if (restart) {
@@ -584,7 +584,7 @@ void ConfigNetwork() {
   EEPROM.begin(25);
   bt.begin("eMBOS");
   while (!check_wifiUpdate()) {}
-  //read eeprom
+  //read eeprom first 25 bytes. later to modify to handle multiple networks.
   for (int i = 0; i < 25; i++) {
     valu = EEPROM.read(i);
     stream += (char)valu;

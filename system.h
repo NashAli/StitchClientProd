@@ -233,7 +233,7 @@ unsigned int interval = 30000;
 
 BluetoothSerial bt; //Object for Bluetooth
 IPAddress ip;
-WiFiServer server(httpPort);  //  setup the http server
+WiFiServer server(httpPort);  //  setup the http server object
 WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);

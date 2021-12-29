@@ -46,7 +46,7 @@
   058,988 bytes RAM (18%)
 */
 
-
+//  DO NOT ALTER THE ORDER OF THESE INCLUDES 
 #include <Wire.h>
 #include <EEPROM.h>
 #include <WiFi.h>                 //  Wifi
@@ -58,6 +58,7 @@
 #include <time.h>                 //  standard time stuff
 #include "system.h"               //  basic
 #include "display_support.h"      //  oled
+#include "comms.h"                //  basic network
 #include "support.h"              //  general support routines and functions for eMB-OS.
 #include "SDC_Support.h"          //  goodies for the SD Card
 #include "Telnet_Support.h"       //  Telnet

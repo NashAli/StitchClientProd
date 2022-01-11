@@ -177,14 +177,21 @@ String nl = "\n";
 String cr = "\r";
 
 
-// unicode symbols
+// unicode special symbols
 String revso_sym = "\u005c";
 String cr_sym =  "\u00A9";
 String pat_sym =  "\u1360";
 String tm_sym =  "\u2122";
+String anchor_sym =  "\u2693";
 String ard_sym =  "\u267E";
+String sball_sym =  "\u26BD";
+String bball_sym =  "\u26BE";
 String sman_sym =  "\u26C4";
+String psun_sym =  "\u26C5";
 String golf_sym =  "\u26F3";
+String sboat_sym =  "\u26F5";
+String tent_sym =  "\u26FA";
+String stars_sym =  "\u2728";
 
 //  machine vars
 
@@ -203,6 +210,7 @@ uint8_t limits, comval;       //  read mcp23017 ports' values.
 const int EstopPin = 4;       //  GPIO4 - EMERGENCY STOP PIN !!
 const int SDCardSelect = 5;   //  GPIO5 on esp32
 const int WorkLights = 34;    //  GPIO34 - work lights via the ULN2803A
+const int VBAT_PIN = 35;
 int MWAIT = 10;               //  motor wait timing
 
 // change your threshold value here
@@ -233,10 +241,27 @@ unsigned int interval = 30000;
 
 BluetoothSerial bt; //Object for Bluetooth
 IPAddress ip;
-WiFiServer server(httpPort);  //  setup the http server object
+AsyncWebServer httpServer(80);
 WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
+
+/*
+ * converts a String to Integer value, m is the base. ie. 16 = hexadecimal
+ */
+ int StrToInt(String cpv, int m){
+  int iv;
+  return iv = strtoul(cpv.c_str(), 0, m);
+ }
+/*
+   Convert integer to hexadecimal string
+*/
+String IntToHexStr(int v) {
+  char hex_string[20];
+  sprintf(hex_string, "%2X", v); //convert number to hex
+  return hex_string;
+}
+
 
 
 #endif

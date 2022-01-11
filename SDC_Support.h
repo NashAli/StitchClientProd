@@ -1,4 +1,4 @@
- #ifndef _SDC_S_H
+#ifndef _SDC_S_H
 #define _SDC_S_H
 /*
   Created:      19:55 2021.11.2
@@ -43,7 +43,8 @@
 
 #include "FS.h"     //  file system
 #include "SD.h"     //  SD Card
-
+#include "SD_MMC.h"
+#include "SPI.h"    //  esp32 spi
 
 SPIClass spiSD(VSPI);
 bool SDCARD_READY = false;

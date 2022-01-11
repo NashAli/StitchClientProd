@@ -136,7 +136,7 @@ void ShowBTStart() {
   display1.setCursor(10, 20);
   display1.print("Bluetooth active!");
   display1.setCursor(10, 35);
-  display1.print("If done.");
+  display1.print("If completed.");
   display1.setCursor(10, 50);
   display1.print("Wait for auto-login.");
   display1.display();

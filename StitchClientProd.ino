@@ -48,21 +48,28 @@
 
 //  DO NOT ALTER THE ORDER OF THESE INCLUDES 
 #include <Wire.h>
-#include <EEPROM.h>
 #include <WiFi.h>                 //  Wifi
 #include <WiFiClient.h>           //  HTTP
 #include <WiFiAP.h>               //  AP
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <ESPmDNS.h>
+#include <EEPROM.h>               //  manage the auto-l
 #include "BluetoothSerial.h"      //  BT for login
 //#include "libssh_esp32.h"       //  SSH
 #include <NTPClient.h>            //  time server
 #include <time.h>                 //  standard time stuff
+
 #include "system.h"               //  basic
 #include "display_support.h"      //  oled
-#include "comms.h"                //  basic network
 #include "support.h"              //  general support routines and functions for eMB-OS.
 #include "SDC_Support.h"          //  goodies for the SD Card
+
+#include "comms.h"                //  all other network
 #include "Telnet_Support.h"       //  Telnet
 #include "FTP_Support.h"          //  FTP
+
+
 
 
 
@@ -78,10 +85,8 @@ void setup() {
   //InitializeSensorGroup();
   InitMotorsPort();
   InitControllerPort();
-  //StartAP();
   SetupTelnet();
   InitFTP();
-  //StartSSH();
   String logthis = ACyan + "System started@:" + AWhite + GetASCIITime();
   LogToSD(logthis);
   ShowTime();
@@ -93,5 +98,6 @@ void loop() {
     EStopMachine();
   }
   telnet.loop();
-  //CheckForHTTPRequest();
+  ftpSrv.handleFTP();        //make sure in loop you call handleFTP()!!
+  //httpServer.handleClient();
 }

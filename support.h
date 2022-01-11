@@ -140,6 +140,40 @@ void InitControllerPort() {
     delay(500);
   }
 }
+
+void SetPortPin(int pn, bool v) {
+
+}
+
+bool GetPortPin(int pn) {
+  int comval = 0;
+  comval = mcp.readPort(MCP23017Port::A);
+
+}
+
+void SetPort(int pn, int v) {
+  if (pn == 1) {
+    mcp.writeRegister(MCP23017Register::GPIO_A, v);//  Set port A
+  }
+  else {
+    mcp.writeRegister(MCP23017Register::GPIO_B, v);  //  Set port B
+  }
+}
+/*
+   Returns with the value of the port as a hexadecimal string.
+*/
+String GetPort(int pn) {
+  int comval;
+  if (pn == 1) {
+    comval = mcp.readPort(MCP23017Port::A);
+  } else {
+    comval = mcp.readPort(MCP23017Port::B);
+  }
+  return IntToHexStr(comval);
+}
+
+
+
 /*
    Dear compiler... Am I there yet? Please go easy on me today, my morning has been rough.
 */

@@ -1,6 +1,6 @@
 /*
   Created:      19:55 2021.11.2
-  Last Updated: 14:45 2021.11.25
+  Last Updated: 04:29 2022.01.20
   MIT License
 
   Copyright (c) 2021 Zulfikar Naushad Ali
@@ -44,11 +44,16 @@
   19:21   12/16/2021  - added BlueTooth serial support.
   1,471,158 bytes  Program (~46%) (Max 3,145,728 bytes)
   058,988 bytes RAM (18%)
+
+  17:31   01/25/2022  - updates
+  1,528,366 bytes  Program (~48%) (Max 3,145,728 bytes)
+  054,824 bytes RAM (16%)
 */
 
-//  DO NOT ALTER THE ORDER OF THESE INCLUDES 
+//  DO NOT ALTER THE ORDER OF THESE INCLUDES
 #include <Wire.h>
 #include <WiFi.h>                 //  Wifi
+#include "esp_event.h"
 #include <WiFiClient.h>           //  HTTP
 #include <WiFiAP.h>               //  AP
 #include <AsyncTCP.h>
@@ -56,7 +61,6 @@
 #include <ESPmDNS.h>
 #include <EEPROM.h>               //  manage the auto-l
 #include "BluetoothSerial.h"      //  BT for login
-//#include "libssh_esp32.h"       //  SSH
 #include <NTPClient.h>            //  time server
 #include <time.h>                 //  standard time stuff
 
@@ -64,32 +68,31 @@
 #include "display_support.h"      //  oled
 #include "support.h"              //  general support routines and functions for eMB-OS.
 #include "SDC_Support.h"          //  goodies for the SD Card
-
 #include "comms.h"                //  all other network
 #include "Telnet_Support.h"       //  Telnet
-#include "FTP_Support.h"          //  FTP
-
-
-
 
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);     //  for testing & debug
-  InitDisplay();
-  InitializeSDCard(SDCardSelect);
-  ConfigNetwork();
-  pinMode(WorkLights, OUTPUT);           // set pin to output
+  initializeDisplay();
+  initializeSDCard(SDCardSelect);
+  configNetwork();
+  pinMode(LAMP, OUTPUT);           // set pin to output
   pinMode(LED_BUILTIN, OUTPUT);
-  ScanI2CBus();
-  //InitializeSensorGroup();
-  InitMotorsPort();
-  InitControllerPort();
-  SetupTelnet();
-  InitFTP();
-  String logthis = ACyan + "System started@:" + AWhite + GetASCIITime();
-  LogToSD(logthis);
-  ShowTime();
+  pinMode(ML_INTA, INPUT_PULLUP);
+  scanI2CBus();
+  //initializeSensorGroup();
+  initializeMotorsPort();
+  initializeControllerPort();
+  setupTelnet();
+  String logthis = ACyan + "System started@:" + AWhite + getASCIITime();
+  logToSD(logthis);
+  showFreeMemory();
+  if (GetCalibrationValues()){
+    //HomeAll
+    HomeAll();
+  }
 }
 
 void loop() { 
@@ -98,6 +101,4 @@ void loop() {
     EStopMachine();
   }
   telnet.loop();
-  ftpSrv.handleFTP();        //make sure in loop you call handleFTP()!!
-  //httpServer.handleClient();
 }

@@ -58,8 +58,16 @@ bool SDCARD_READY = false;
   GPIO5   CS
 */
 
-
-void InitializeSDCard(int cs)
+/*
+   Title:       InitializeSDCard
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void initializeSDCard(int cs)
 {
   spiSD.begin(18, 19, 23, cs); //SCK,MISO,MOSI,SS //VSPI1
   if (!SD.begin(cs, spiSD)) {
@@ -123,17 +131,30 @@ void InitializeSDCard(int cs)
 }
 
 /*
- * 
- */
-void StopSDCard()
+   Title:       StopSDCard
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void stopSDCard()
 {
   SD.end();
 }
 
 /*
-   Mount drive if exists
+
+   Title:      CheckSDCard
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Mount drive if exists
+   Input:
+   Returns:
 */
-void CheckSDCard(int cs)
+void checkSDCard(int cs)
 {
   display1.clearDisplay();
   display1.setCursor(5, 10);
@@ -186,13 +207,21 @@ void CheckSDCard(int cs)
   display1.display();
   delay(2000);
 }
-
-void LogToSD(String dataString) {
+/*
+   Title:       LogToSD
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Appends to the system log if exists, else one is created.
+   Input:       Information in string format
+   Returns:     nothing
+*/
+void logToSD(String dataString) {
   File root;
   root.rewindDirectory();
   root = SD.open("/syslog.txt", FILE_APPEND);
   if (!root) {
-    DrawBanner();
+    drawBanner();
     display1.setCursor(20, 30);
     display1.print("no logs found.");
     display1.setCursor(20, 40);
@@ -203,8 +232,8 @@ void LogToSD(String dataString) {
     //create new one here, if necessary
     String header = ABrightMagenta + "eMBOS -" + ABrightRed + " SYSTEM LOG - " + ABrightCyan + "MASTER";
     root.println(header);
-    root.println(ABrightYellow + "System Log Started@:" + AWhite + GetASCIITime());
-    String user = AWhite + GetASCIITime() + tab + "Telnet User@" + "default user" + tab + ABrightGreen + "logged in sucessfully!";
+    root.println(ABrightYellow + "System Log Started@:" + AWhite + getASCIITime());
+    String user = AWhite + getASCIITime() + tab + "Telnet User@" + "default user" + tab + ABrightGreen + "logged in sucessfully!";
     root.println(user);
     root.close();
     display1.setCursor(20, 50);
@@ -220,7 +249,7 @@ void LogToSD(String dataString) {
   }
   // if the file isn't open, pop up an error:
   else {
-    DrawBanner();
+    drawBanner();
     display1.setCursor(30, 30);
     display1.print("log file");
     display1.setCursor(30, 40);
@@ -228,7 +257,16 @@ void LogToSD(String dataString) {
     display1.display();
   }
 }
-void DumpLog() {
+/*
+   Title:       DumpLog
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void dumpLog() {
   if (SDCARD_READY) {
     display1.print("card ready! writing to port:");
     // open the file. note that only one file can be open at a time,
@@ -247,5 +285,34 @@ void DumpLog() {
     }
   }
 }
+/*
+   Title:       SDHelpLookup
+   Author:      zna
+   Date:        01-27-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+int SDHelpLookup(String comm) {
+  int x = 1;
+  return x;
+}
+/*
+   Title:       GetFile
+   Author:      zna
+   Date:        01-27-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void getFile(){
+  
+}
+
+
+
+
 
 #endif

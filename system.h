@@ -55,9 +55,11 @@
 #define MotorControl 0x20
 #define AuxControl 0x21
 #define Accel 0x68
-#define LimitsIRQ 34
-#define AuxControlIRQ 35
+#define ML_INTA 32
+#define MVOLT_PIN 35
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
+#define LAMP 34 //  GPIO34 - work lights via the ULN2803A pin 1.
+
 
 // Define MCP23017 registers values from datasheet
 #define IODIRA    0x00  // IO direction A - 1= input 0 = output - set as all INPUT 0xFF 
@@ -110,20 +112,57 @@
 
 #define STEPPERREV  400       //  set the steps per revolution of the motor for 1:1 mode
 
-// MCP23017 - AUXILLARY_CONTROLLER @ 0x21
+/*
+   ANSI Terminal ESC sequences
+*/
+String ADarkGrey =      "\u001b[1;30m";
+String ABlack =         "\u001b[30m";
+String ARed =           "\u001b[31m";
+String AGreen =         "\u001b[32m";
+String AYellow =        "\u001b[33m";
+String ABlue =          "\u001b[34m";
+String AMagenta =       "\u001b[35m";
+String ACyan =          "\u001b[36m";
+String AWhite =         "\u001b[37m";
+String AReset =         "\u001b[0m";
+String ABrightBlack =   "\u001b[30;1m";
+String ABrightRed =     "\u001b[31;1m";
+String ABrightGreen =   "\u001b[32;1m";
+String ABrightYellow =  "\u001b[33;1m";
+String ABrightBlue =    "\u001b[34;1m";
+String ABrightMagenta = "\u001b[35;1m";
+String ABrightCyan =    "\u001b[36;1m";
+String ABrightWhite =   "\u001b[37;1m";
 
-//  Status and Data from sensors initial values
-bool MPU6050_READY = false;
-bool MPU6050_ACTIVE = false;
-bool MOTORS_READY = false;
-bool MOTORS_ACTIVE = false;
-bool AUX_READY = false;
-bool AUX_ACTIVE = false;
+String ABold =          "\u001b[1m";
+String AClearScreen =   "\u001b[2J";
+String AHomeCursor =    "\u001b[;H";
+String ASlowBlink =     "\u001b[5m";
+String AReverse =       "\u001b[7m";
+String AUnderline =     "\u001b[4m";
+String AUpaline =       "\u001b[1A";
+
+String tab =            "\u0009";
+String nl =             "\n";
+String cr =             "\r";
 
 
-//  MACHINE GLOBAL VARIABLES  ********************************************************
+// unicode special symbols
 
-String OSNAME = "eMB-OS V1.1";
+String revso_sym =      "\u005c";
+String cr_sym =         "\u00A9";
+String pat_sym =        "\u1360";
+String tm_sym =         "\u2122";
+String anchor_sym =     "\u2693";
+String ard_sym =        "\u267E";
+String sball_sym =      "\u26BD";
+String bball_sym =      "\u26BE";
+String sman_sym =       "\u26C4";
+String psun_sym =       "\u26C5";
+String golf_sym =       "\u26F3";
+String sboat_sym =      "\u26F5";
+String tent_sym =       "\u26FA";
+String stars_sym =      "\u2728";
 
 /*
   ORG - starting positions
@@ -142,75 +181,36 @@ String OSNAME = "eMB-OS V1.1";
   CalGood - if the system hommed X and Y successfully. Certain test operations will cause
   the calibrations to be off or just may require re-calibration.
 */
+//  MACHINE GLOBAL VARIABLES  ********************************************************
 
-/*
-   ANSI Terminal ESC sequences
-*/
-String ADarkGrey ="\u001b[1;30m";
-String ABlack =  "\u001b[30m";
-String ARed =  "\u001b[31m";
-String AGreen =  "\u001b[32m";
-String AYellow =  "\u001b[33m";
-String ABlue =  "\u001b[34m";
-String AMagenta =  "\u001b[35m";
-String ACyan =  "\u001b[36m";
-String AWhite =  "\u001b[37m";
-String AReset =  "\u001b[0m";
-String ABrightBlack = "\u001b[30;1m";
-String ABrightRed = "\u001b[31;1m";
-String ABrightGreen = "\u001b[32;1m";
-String ABrightYellow = "\u001b[33;1m";
-String ABrightBlue = "\u001b[34;1m";
-String ABrightMagenta = "\u001b[35;1m";
-String ABrightCyan = "\u001b[36;1m";
-String ABrightWhite = "\u001b[37;1m";
-
-String ABold = "\u001b[1m";
-String AClearScreen = "\u001b[2J";
-String AHomeCursor = "\u001b[;H";
-String ASlowBlink = "\u001b[5m";
-String AReverse = "\u001b[7m";
-String AUnderline = "\u001b[4m";
-String AUpaline = "\u001b[1A";
-String tab = "\u0009";
-String nl = "\n";
-String cr = "\r";
-
-
-// unicode special symbols
-String revso_sym = "\u005c";
-String cr_sym =  "\u00A9";
-String pat_sym =  "\u1360";
-String tm_sym =  "\u2122";
-String anchor_sym =  "\u2693";
-String ard_sym =  "\u267E";
-String sball_sym =  "\u26BD";
-String bball_sym =  "\u26BE";
-String sman_sym =  "\u26C4";
-String psun_sym =  "\u26C5";
-String golf_sym =  "\u26F3";
-String sboat_sym =  "\u26F5";
-String tent_sym =  "\u26FA";
-String stars_sym =  "\u2728";
-
-//  machine vars
-
+String OSNAME = "eMB-OS V1.1";
+bool HELP_SYS = false;
+String commDesc[25];
+String commExample[25];
+String commExtra[25];
+//  Status and Data from sensors initialization values
+bool MPU6050_READY = false;
+bool MPU6050_ACTIVE = false;
+bool MOTORS_READY = false;
+bool MOTORS_ACTIVE = false;
+bool AUX_READY = false;
+bool AUX_ACTIVE = false;
+bool ABORT_TEST = false;
 int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET, SXHOME, SYHOME;
 bool SYSTEM_BUSY = false;     //  OS is busy.
 bool MachineRun = false;      //  a motor is cycling (X-Y-Z).
-bool LIMITS_FLAG = false;    //  a boundary has been breached.
+bool LIMITS_FLAG = false;     //  a boundary has been breached.
 bool NeedleUp = false;        //  logic to manage the needle (Z) to keep it out of
 bool NeedleDown = false;      //  harms way when the fabric gantry is in motion.
-bool Forward = true;          //  direction logic for DRV8845
 bool CalGood = false;         //  calibration has been completed sucessfully.
-
+// MCP23017 - AUXILLARY_CONTROLLER @ 0x21
 bool Verbosity = true;        //  setting for communications protocol. Application can control response type ALPHA/NUMERIC
 
 uint8_t limits, comval;       //  read mcp23017 ports' values.
+
+//  ESP32 PINS
 const int EstopPin = 4;       //  GPIO4 - EMERGENCY STOP PIN !!
 const int SDCardSelect = 5;   //  GPIO5 on esp32
-const int WorkLights = 34;    //  GPIO34 - work lights via the ULN2803A
-const int VBAT_PIN = 35;
 int MWAIT = 10;               //  motor wait timing
 
 // change your threshold value here
@@ -246,22 +246,124 @@ WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
 
+struct Position  
+{
+  uint16_t X;
+  uint16_t Y;
+};
+Position pos;
+
+enum class SYSTEM_STATUS : byte
+{
+	Ready = 0,
+	MachineBusy = 1,
+	CommsBusy = 2,
+	SDBusy = 3
+};
+
+
 /*
- * converts a String to Integer value, m is the base. ie. 16 = hexadecimal
- */
- int StrToInt(String cpv, int m){
+   Title:       Lamp
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Turns on/off the work lamp.
+   Input:       <on:off>
+   Returns:     nothing
+*/
+void lamp(int v) {
+  if (v == 0) {
+    digitalWrite(LAMP, LOW);
+  } else {
+    digitalWrite(LAMP, HIGH);       // set pin high
+  }
+}
+/*
+   Title:       GetASCIITime
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Gets the time and converts to a string.
+   Input:       nothing
+   Returns:     time in ascii string format.
+*/
+String getASCIITime() {
+  time_t rawtime;
+  struct tm *info;
+  time( &rawtime );
+  info = localtime( &rawtime );
+  String mt = asctime(info);
+  mt.replace("\n", "");
+  return mt;
+}
+/*
+   Title:
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+String getMotorVoltage() {
+  uint16_t vbat = analogRead(MVOLT_PIN);
+  float battery_voltage = ((float)vbat / 4095.0) * 3.3 * (1184 / 1000.0);
+  String voltage =  String(battery_voltage);
+  return voltage;
+}
+
+/*
+
+
+   Title:       converts a String to Integer value, m is the base. ie. 16 = hexadecimal
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+int stringToInteger(String cpv, int m) {
   int iv;
   return iv = strtoul(cpv.c_str(), 0, m);
- }
+}
 /*
-   Convert integer to hexadecimal string
+
+   Title:       Convert integer to hexadecimal string
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-String IntToHexStr(int v) {
+String integerToHexString(int v) {
   char hex_string[20];
   sprintf(hex_string, "%2X", v); //convert number to hex
   return hex_string;
 }
+/*
+   Title:       LoadHelp
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Loads the help system arrays
+   Input:       none
+   Returns:     HelpArray
+*/
+void loadHelp() {
 
+}
+/*
+   Title:       UnloadHelp
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Unloads the help system arrays to free up memory.
+   Input:       none
+   Returns:     unloads the HelpArray
+*/
+void unloadHelp() {
 
-
+}
 #endif

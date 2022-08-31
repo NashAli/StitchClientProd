@@ -55,62 +55,58 @@ MCP23017 mcp = MCP23017(MotorControl);
 MCP23017 acp = MCP23017(AuxControl);
 
 //  These are the operational routines for STITCH
+/*
+  *************************************** INTERRUPT HANDLER *****************************
+*/
+void IRAM_ATTR CheckLimits() {
+  limits = mcp.readPort(MCP23017Port::A);
+  // set a flag for OS, new limits is available and needs attention quickly.
+  LIMITS_FLAG = true;
+}
 /* -------------------------- MCP23017 INIT ------------------------------------------------------- */
 /*
    Dear Complier, Error Messages, please let's have none of those.
    Please don't ignore me, I think you're ignoring me! I've seen you here before!
 */
-void errorMsg(String error, bool restart = true) {
-  if (restart) {
-    DrawBanner();
-    display1.setCursor(5, 15);
-    display1.print(error);
-    display1.display();
-    delay(2000);
-    ESP.restart();
-    delay(2000);
-  }
-}
+
 /*
-  ************************************  Logic for the work light.
+   Title:       InitMotorsPort
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Initializes the MCP23017 assigned to controlling the stepper motor drivers and reading the limit sensors.
+   Input:       nothing
+   Returns:     nothing
 */
-void Lamp(int v) {
-  if (v == 0) {
-    digitalWrite(WorkLights, LOW);
-  } else {
-    digitalWrite(WorkLights, HIGH);       // set pin high
-  }
-}
-/*
-   *************************************  TIMESTAMP for logs.
-*/
-String GetASCIITime() {
-  time_t rawtime;
-  struct tm *info;
-  time( &rawtime );
-  info = localtime( &rawtime );
-  String mt = asctime(info);
-  mt.replace("\n", "");
-  return mt;
-}
-/*
- * ****************************************** Init i2c Motors.
- */
-void InitMotorsPort() {
+void initializeMotorsPort() {
   if (MOTORS_ACTIVE) {
     mcp.init();
     mcp.portMode(MCP23017Port::A, 0xFF);  //Port A as inputs
     mcp.portMode(MCP23017Port::B, 0);     //Port B as outputs
+    mcp.interruptMode(MCP23017InterruptMode::Separated);
+    mcp.interrupt(MCP23017Port::A, CHANGE);  // trigger an interrupt when an input pin CHANGE is detected on PORTA
+    mcp.clearInterrupts();
+    mcp.writeRegister(MCP23017Register::IPOL_A, 0x00);
+    mcp.writeRegister(MCP23017Register::IPOL_B, 0x00);
     mcp.writeRegister(MCP23017Register::GPIO_A, 0x00);  //Reset port A
     mcp.writeRegister(MCP23017Register::GPIO_B, 0x06);  //Reset port B to default value()
-    //set the limits interrupt to GPIO34
-    DrawBanner();
+    for (int i = 0; i < 8; i++) {
+      mcp.pinMode(i, INPUT_PULLUP, true);
+    }
+    for (int i = 8; i < 16; i++) {
+      mcp.pinMode(i, OUTPUT);
+    }
+    attachInterrupt(digitalPinToInterrupt(ML_INTA), CheckLimits, FALLING);
+    //set the limits interrupt to GPIO32
+    MOTORS_READY = true;
+    drawBanner();
     display1.setCursor(20, 20);
     display1.print("Motors in!");
     display1.display();
     delay(500);
   } else {
-    DrawBanner();
+    MOTORS_READY = false;
+    drawBanner();
     display1.setCursor(20, 20);
     display1.print("No Motors!");
     display1.display();
@@ -118,9 +114,15 @@ void InitMotorsPort() {
   }
 }
 /*
- * ********************************* Init Remote controller.
- */
-void InitControllerPort() {
+   Title:       InitControllerPort
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Initializes the aux port if it is installed
+   Input:       nothing
+   Returns:     nothing
+*/
+void initializeControllerPort() {
   if (AUX_ACTIVE) {
     acp.init();
     acp.portMode(MCP23017Port::A, 0xFF);  //Port A as in
@@ -128,29 +130,52 @@ void InitControllerPort() {
     acp.writeRegister(MCP23017Register::GPIO_A, 0x00);  //Reset port A
     acp.writeRegister(MCP23017Register::GPIO_B, 0x00);  //Reset port B
     //set the control interrupt to GPIO35
-    DrawBanner();
+    drawBanner();
     display1.print("Remote Control in");
     display1.display();
     delay(500);
   } else {
-    DrawBanner();
+    drawBanner();
     display1.setCursor(25, 20);
     display1.print("No Remote");
     display1.display();
     delay(500);
   }
 }
-
-void SetPortPin(int pn, bool v) {
-
+/*
+   Title:       SetPortPin
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Sets a pin on the specified port
+   Input:       port name<A:B>, pin number<0-7>, value<H:L>
+   Returns:     nothing
+*/
+void SetPortPin(int pn, int pp, bool v) {
+  //mcp.setPin(pn,pp,v);
 }
-
-bool GetPortPin(int pn) {
+/*
+   Title:       GetPortPin
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Initializes the aux port if it is installed
+   Input:       port name<A:B>,<0-7>
+   Returns:     pin value <H:L>
+*/
+bool GetPortPin(int pn, int pp) {
   int comval = 0;
   comval = mcp.readPort(MCP23017Port::A);
-
 }
-
+/*
+   Title:       SetPort
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Initializes the aux port if it is installed
+   Input:       port name<A:B>, value<0-7>
+   Returns:     nothing
+*/
 void SetPort(int pn, int v) {
   if (pn == 1) {
     mcp.writeRegister(MCP23017Register::GPIO_A, v);//  Set port A
@@ -160,7 +185,13 @@ void SetPort(int pn, int v) {
   }
 }
 /*
-   Returns with the value of the port as a hexadecimal string.
+   Title:       GetPort
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Gets the port value port if it is installed
+   Input:       port name<A:B>
+   Returns:     Hex string value
 */
 String GetPort(int pn) {
   int comval;
@@ -169,13 +200,23 @@ String GetPort(int pn) {
   } else {
     comval = mcp.readPort(MCP23017Port::B);
   }
-  return IntToHexStr(comval);
+  return integerToHexString(comval);
 }
 
 
 
 /*
    Dear compiler... Am I there yet? Please go easy on me today, my morning has been rough.
+*/
+
+/*
+   Title:       IsAtDestination
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Checks to see if X an Y location has been reached.
+   Input:       nothing
+   Returns:     true if successful
 */
 bool IsAtDestination() {
   if ((XPOS = XDEST) && (YPOS = YDEST)) {
@@ -187,26 +228,49 @@ bool IsAtDestination() {
 }
 
 /*
-   Read the limits port A of the MCP23017 Motors control. An interrupt can set the flag to read all limits
-   
+   Title:       ReadLimits
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Initializes the aux port if it is installed
+   Input:       nothing
+   Returns:     nothing
 */
 void ReadLimits() {
   limits = mcp.readPort(MCP23017Port::A);
 }
 /*
-   Read the controller port A of the MCP23017 onboard the remote link
+   Title:       ReadController
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Reads the aux port if it is installed
+   Input:       nothing
+   Returns:     Port A value
 */
 void ReadController() {
   comval = acp.readPort(MCP23017Port::A);
 }
 /*
-
+   Title:       SetController
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Sets the aux port if it is installed
+   Input:       nothing
+   Returns:     nothing
 */
 void SetController() {
 
 }
 /*
-   Reads the active LOW Needle Up position sensor
+   Title:       IsNeedleUp
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Tests for NEEDLE_UP
+   Input:       nothing
+   Returns:     true if needle is up
 */
 bool IsNeedleUp() {
   ReadLimits();
@@ -215,7 +279,13 @@ bool IsNeedleUp() {
   } else return true;
 }
 /*
-   Reads the active LOW Needle Down position sensor
+   Title:       IsNeedleDown
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Test for NEEDLE_DOWN
+   Input:       nothing
+   Returns:     true if needle is down
 */
 bool IsNeedleDown() {
   ReadLimits();
@@ -224,7 +294,13 @@ bool IsNeedleDown() {
   } else return true;
 }
 /*
-   Command to set the needle to the up position.
+   Title:       SetNeedleUp
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: send needle up
+   Input:       nothing
+   Returns:     nothing
 */
 void SetNeedleUp() {
   // while
@@ -232,7 +308,13 @@ void SetNeedleUp() {
   // run needle motor
 }
 /*
-   Command to set the needle to the down position.
+   Title:       SetNeedleDown
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: send needle down.
+   Input:       nothing
+   Returns:     nothing
 */
 void SetNeedleDown() {
   // while
@@ -240,19 +322,54 @@ void SetNeedleDown() {
   // run needle motor
 }
 /*
-   Command to full cycle of the needle from the Needle up position.
+   Title:       CycleNeedle
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Runs the Needle through one cycle.
+   Input:       nothing
+   Returns:     nothing
 */
 void CycleNeedle() {
   //  if needle is at NeedleUp then cycle the needle.
 }
 
 /*
-   command to move X-motor one step!
-   param: dir = true is forward else reverse.
-   param: sm = 0 is full step (400 steps/rev)
-   param: sm = 1 is 1/2 step (800 steps/rev)
-   param: sm = 2 is 1/4 step(1600 steps/rev)
+    Title:          MoveMotor
+    Author:         zna
+    Date:           01.21.22
+    Revision:       1.0.0
+    Description:    move the motor. Replaces moveXMotor & moveYMotor
+    Inputs:         <axis>,<steps>,<direction>
+    Returns:        nothing
 */
+void MoveMotor(uint8_t axis, uint8_t steps, uint8_t dir) {
+  // read the axis and dir values
+  // translate to correct pre and post val
+  
+  uint8_t preval = (axis | steps | dir | 0b00000000);
+  uint8_t postval = (axis | steps | dir | 0b00001000);
+
+  mcp.writeRegister(MCP23017Register::GPIO_B, preval);      // send pre-step  AXIS STEP DIR - FWD STEP 1/4
+  mcp.writeRegister(MCP23017Register::GPIO_B, postval);     // send post-step
+  delayMicroseconds(2);                                   // step pulse width 1.9uSec (min. as per DRV8825 specs.)
+  mcp.writeRegister(MCP23017Register::GPIO_B, preval);      // send pre-step
+  showPosition();
+}
+
+
+/*
+   Title:       MoveXMotor
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Move the X motor, command to move X-motor one step!
+   Input:       param: dir = true is forward else reverse.
+                param: sm = 0 is full step (400 steps/rev)
+                param: sm = 1 is 1/2 step (800 steps/rev)
+                param: sm = 2 is 1/4 step(1600 steps/rev)
+   Returns:     nothing
+
 void MoveXMotor(bool dir, int sm) {
   if (dir) {
     switch (sm) {
@@ -303,37 +420,44 @@ void MoveXMotor(bool dir, int sm) {
         break;
     }
   }
-  ShowPosition();
-  delay(MWAIT); //wait  milliseconds for the motor to move
 }
+*/
+
+
+
 
 /*
-   command to move Y-motor one step!
-   param: dir = true is forward else reverse.
-   param: sm = 0 is full step (400 steps/rev)
-   param: sm = 1 is 1/2 step (800 steps/rev)
-   param: sm = 2 is 1/4 step(1600 steps/rev)
-*/
+   Title:       MoveYMotor
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Move the Y motor, command to move Y-motor one step!
+   Input:       param: dir = true is forward else reverse.
+                param: sm = 0 is full step (400 steps/rev)
+                param: sm = 1 is 1/2 step (800 steps/rev)
+                param: sm = 2 is 1/4 step(1600 steps/rev)
+   Returns:     nothing
+
 void MoveYMotor(bool dir, int sm) {
   if (dir) {
 
     switch (sm) {
       case 0:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x04);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/1
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x04);  // send pre-step Y STEP SIGNAL DIR - FWD STEP 1/1
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x0C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x04);  // send pre-step
         YPOS = YPOS + 4;
         break;
       case 1:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x24);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/2
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x24);  // send pre-step Y STEP SIGNAL DIR - FWD STEP 1/2
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x2C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x24);  // send pre-step
         YPOS = YPOS + 2;
         break;
       case 2:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x44);  // send pre-step X STEP SIGNAL DIR - FWD STEP 1/4
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x44);  // send pre-step Y STEP SIGNAL DIR - FWD STEP 1/4
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x4C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x44);  // send pre-step
@@ -344,21 +468,21 @@ void MoveYMotor(bool dir, int sm) {
   } else {
     switch (sm) {
       case 0:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x14);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/1
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x14);  // send pre-step Y STEP SIGNAL DIR - REV STEP 1/1
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x1C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x14);  // send pre-step
         YPOS = YPOS - 4;
         break;
       case 1:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x34);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/2
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x34);  // send pre-step Y STEP SIGNAL DIR - REV STEP 1/2
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x3C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x34);  // send pre-step
         YPOS = YPOS - 2;
         break;
       case 2:
-        mcp.writeRegister(MCP23017Register::GPIO_B, 0x54);  // send pre-step X STEP SIGNAL DIR - REV STEP 1/4
+        mcp.writeRegister(MCP23017Register::GPIO_B, 0x54);  // send pre-step Y STEP SIGNAL DIR - REV STEP 1/4
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x5C);  // send post-step
         delayMicroseconds(3);                               // step pulse width 1.9uSec (min)
         mcp.writeRegister(MCP23017Register::GPIO_B, 0x54);  // send pre-step
@@ -366,16 +490,22 @@ void MoveYMotor(bool dir, int sm) {
         break;
     }
   }
-  ShowPosition();
+  showPosition();
   delay(MWAIT);  //wait  milliseconds for motor to move or we can check the MPU5060 later
 }
-/*
+
    Compiler, I'll be back shortly. Just going out to clear my head. I'm going to
    the python club!! Where whitespace rules!
 */
 
 /*
-   checks if the head is at the X axis home position.
+   Title:       IsXHome
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
 bool IsXHome() {
   ReadLimits();
@@ -384,7 +514,13 @@ bool IsXHome() {
   } else return true;
 }
 /*
-   checks if the head is at the X axis max position.
+   Title:       IsXMax
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
 */
 bool IsXMax() {
   ReadLimits();
@@ -393,7 +529,13 @@ bool IsXMax() {
   } else return true;
 }
 /*
-   checks if the head is at the Y axis home position.
+   Title:       IsYHome
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
 */
 bool IsYHome() {
   ReadLimits();
@@ -402,7 +544,13 @@ bool IsYHome() {
   } else return true;
 }
 /*
-   checks if the head is at the Y axis max position.
+   Title:       IsYMax
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
 */
 bool IsYMax() {
   ReadLimits();
@@ -411,44 +559,89 @@ bool IsYMax() {
   } else return true;
 }
 /*
-   command to send head to the y-axis home position
+   Title:       HomeX
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Instructs the X-Motor to return to the Absolute Home position.
+   Input:       nothing
+   Returns:     nothing
 */
 void HomeX() {
-  while (!IsXHome & NeedleUp) {
-    MoveXMotor(!Forward, 1);
+  while (!IsXHome & NeedleUp & XPOS > 0) {
+    MoveMotor(Axis::XAxis,Step::Full,Direction::Reverse);
+    XPOS = XPOS - 1;
+    showPosition();
   }
-
+  yield();
 }
 /*
-   command to send head to the x-axis home position
+   Title:       HomeY
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Instructs the Y-Motor to return to the Absolute Home position.
+   Input:       nothing
+   Returns:     nothing
 */
 void HomeY() {
-  while (!IsYHome & NeedleUp) {
-    MoveYMotor(!Forward, 1);
+  while (!IsYHome && NeedleUp && YPOS > 0) {
+    MoveMotor(Axis::YAxis,Step::Full,Direction::Reverse);
+    YPOS = YPOS - 1;
+    showPosition();
   }
+  yield();
 }
 /*
-   command to home X & Y axii
+   Title:       HomeAll
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Instructs the X-Motor & Y-Motor to return to the Absolute Home position on
+                their respective axis.
+   Input:       nothing
+   Returns:     nothing
 */
 void HomeAll() {
   HomeX();
   HomeY();
 }
 /*
-   Reads the accelerometer;returns true if not moving!
+   Title:       IsDeadStop
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Reads the accelerometer;returns true if not moving!
+                their respective axis.
+   Input:       nothing
+   Returns:     true if successful
+
 */
 bool IsDeadStop() {
+  //reads the accellerometer, if not moving, return true.
   return true;
 }
 
 /*
-
+   Title:       GotoPoint
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Move the gantry to the specified position
+   Input:
+   Returns:
 */
 void GotoPoint(int xpos, int ypos) {
 
 }
 /*
-  Needle Test bypasses MotionSense!
+   Title:       RunNeedleTest
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Needle Test bypasses MotionSense!
+   Input:       function number
+   Returns:     nothing
 */
 void RunNeedleTest(int m) {
   switch (m) {
@@ -460,23 +653,52 @@ void RunNeedleTest(int m) {
       break;
     case 1:
       //set motor on
-      mcp.writeRegister(MCP23017Register::GPIO_B, 0x07);  // set needle motor on, set port to default(no xy motors on!)
+      mcp.writeRegister(MCP23017Register::GPIO_B, 0x07);  // set needle motor on, set port (no xy motors on!)
       delay(1000);
       //set motor off
-      mcp.writeRegister(MCP23017Register::GPIO_B, 0x06);  // set needle motor off, set port to default
+      mcp.writeRegister(MCP23017Register::GPIO_B, 0x06);  // set needle motor off, set port to (no xy motors on!) default state.
       break;
   }
 }
 /*
+
+   Title:       TestCalibration
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+
    confirms the success of calibration by plotting a small grid which can be measured for accuracy!
 */
 void TestCalibration() {
 
 }
-
+/*
+    Title:          setHardHome
+    Author:         zna
+    Date:           01.21.22
+    Revision:       1.0.0
+    Description:    reset the x and y axes, sets the GLOBALS - XORG,YORG and XPOS,YPOS to 0.
+    Inputs:         nothing
+    Returns:        true if successful
+*/
+bool SetHardHome(){
+  HomeX();
+  HomeY();
+  PutCalibrationValues(XORG,YORG);
+  return true;
+}
 
 /*
-
+   Title:       StitcHere
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
 void StitchHere() {
   while (IsDeadStop) {
@@ -485,16 +707,30 @@ void StitchHere() {
 
 }
 /*
- * An interrupt has been fired and a LIMITS_FLAG has been set
- */
+   Title:       CheckStatus
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Interrupt Handler
+   Input:
+   Returns:
+*/
 void CheckStatus() {
 
 }
 
-
+/*
+   Title:       EStopMachine
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
 void EStopMachine() {
   //stop all motors, preserve all values, set needle up
-  DrawBanner();
+  drawBanner();
   display1.setCursor(20, 15);
   display1.print("EMERGENCY STOP!");
   display1.setCursor(20, 26);
@@ -522,17 +758,25 @@ void EStopMachine() {
 /* ------------------------------- HARDWARE -------------------------------------------------- */
 
 /*
+
+   Title:       ScanI2CBus
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
   ScanI2CBus is implemented - 9/21/2020
   this has to be done before init sensor group sets the sensor availability so the system can ignore offline sensors
   to manage performance and no bad data woes.  The i2c_scanner uses the return value of the Write.endTransmisstion to
   see if a device did acknowledge to the address.
 */
-void ScanI2CBus() {
+void scanI2CBus() {
   int lastRow = 50;
   byte error, address;
   int nDevices;
   Wire.begin();
-  DrawBanner();
+  drawBanner();
   display1.setCursor(10, 15);
   display1.print("I2C Bus Scan....");
   display1.display();
@@ -541,7 +785,7 @@ void ScanI2CBus() {
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
     if (error == 0) {
-      DrawBanner();
+      drawBanner();
       display1.setCursor(10, 25);
       display1.print("I2C at 0x");
       if (address < 0x10) {
@@ -587,7 +831,7 @@ void ScanI2CBus() {
     }
   }
   if (nDevices == 0) {
-    DrawBanner();
+    drawBanner();
     display1.setCursor(10, lastRow);
     display1.print("No I2C devices found");
     display1.display();
@@ -599,29 +843,23 @@ void ScanI2CBus() {
 }
 
 
-/*
-  *************************************** INTERRUPT HANDLER *****************************
-*/
-void IRAM_ATTR CheckLimits() {
-  limits = mcp.readPort(MCP23017Port::A);
-  // set a flag for OS, new limits is available and needs attention quickly.
-  LIMITS_FLAG = true;
-}
-/*
-  
-*/
-void InitGPIOInterrupt() {
-  pinMode(LimitsIRQ, INPUT_PULLUP);
-  //attachInterrupt(LimitsIRQ, CheckLimits, FALLING);
-  attachInterrupt(digitalPinToInterrupt(LimitsIRQ), CheckLimits, FALLING);
-}
+
 
 /*
    This initialize handles most of the devices that is available. If it finds a sensor it attempts to initialize or if the
    sensor is not attached it will flag the unit so the system will ignore it.
 */
-void InitializeSensorGroup() {
-  DrawBanner();
+/*
+   Title:       InitializeSensorGroup
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void initializeSensorGroup() {
+  drawBanner();
   display1.setCursor(34, 10);
   display1.print("-STITCH Sensors-");
   display1.display();
@@ -644,5 +882,13 @@ void InitializeSensorGroup() {
   display1.display();
   delay(2000);
 }
-
+/*
+   Title:       
+   Author:      zna
+   Date:        05-18-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
 #endif

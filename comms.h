@@ -5,7 +5,7 @@
   Last Updated: 14:45 2021.12.07
   MIT License
 
-  Copyright (c) 2021 Zulfikar Naushad Ali
+  Copyright (c) 2022 Zulfikar Naushad(Nash) Ali
 
   Permission is hereby granted, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,13 @@ bool noLocal() {
   return (WiFi.status() == WL_NO_SSID_AVAIL);
 }
 /*
-   Keeps track of the network status.
+   Title:       isConneced
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
 bool isConnected() {
   return (WiFi.status() == WL_CONNECTED);
@@ -65,18 +71,26 @@ bool isConnected() {
 
 
 /*
-  This initializes the AP setup. This can be done with or without an available network. Typically
-  if no network is found or none available to connect to; the SewMachine AP will be activated for
-  communications.
+   Title:       StartAP
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:  This initializes the AP setup. This can be done with or without connection to an available network.
+   Typically if no network is found or none available to connect to; the SewMachine AP will be activated for
+   communications.
+   Input:
+   Returns:
 */
-void StartAP() {
+void startAP() {
   // Setting the ESP as an access point
   // Remove the password parameter, if you want the AP (Access Point) to be open
   WiFi.softAP(ssidAP, appwd, 13, 0, 1);
   //wait for SYSTEM_EVENT_AP_START
+  while(!SYSTEM_EVENT_AP_START){
   delay(200);
+}
   if (!WiFi.softAPConfig(IPAddress(192, 168, 5, 1), IPAddress(192, 168, 5, 1), IPAddress(255, 255, 255, 0))) {
-    DrawBanner();
+    drawBanner();
     display1.setCursor(10, 20);
     display1.print("AP Setup Failed!");
     display1.display();
@@ -89,18 +103,24 @@ void StartAP() {
 
   httpServer.serveStatic("/", SD, "/home/").setFilter(ON_AP_FILTER);
   httpServer.begin();
-  DrawBanner();
+  drawBanner();
   display1.setCursor(20, 20);
   display1.print("AP IP address:");
   display1.setCursor(30, 35);
   display1.print(APIP);
-  ShowTime();
+  showTime();
   display1.display();
 
 }
 
 /*
-   Bluetooth connect
+   Title:       check_wifiUpdate
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
 bool check_wifiUpdate() {
   unsigned long currentMillis = millis();
@@ -138,7 +158,7 @@ bool check_wifiUpdate() {
       }
       EEPROM.write(addr, 0x0A);
       addr++;
-      EEPROM.commit();
+      EEPROM.end();
       bt.println("SSID & Password Stored!");
       bt.println("Network setup complete!");
       return true;
@@ -150,14 +170,20 @@ bool check_wifiUpdate() {
 }
 
 /*
-
+   Title:       ConfigNetwork
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-void ConfigNetwork() {
-  ShowBTStart();
-  EEPROM.begin(25);
+void configNetwork() {
+  showBTStart();
+  EEPROM.begin(50);
   bt.begin("eMBOS");
   while (!check_wifiUpdate()) {}
-  //read eeprom first 25 bytes. later to modify to handle multiple networks.
+  //read eeprom first 25 bytes. later to modify to handle multiple networks.next byte is CalGood byte, next 4 bytes are calibration values
   for (int i = 0; i < 25; i++) {
     valu = EEPROM.read(i);
     stream += (char)valu;
@@ -172,30 +198,35 @@ void ConfigNetwork() {
   char passw[j];
   temp.toCharArray(ssid, i);
   temp2.toCharArray(passw, j);
-  ShowWifiCreds(ssid, passw);
+  showWifiCreds(ssid, passw);
   delay(5000);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passw);
   //connectToWiFi(ssid,passw);
   if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    ShowMessage("No WiFi available");
+    showMessage("No WiFi available");
     delay(1000);
-    StartAP();
+    startAP();
   } else {
     timeClient.begin();
     delay(50);
     timeClient.update();
-    ShowWifi();
-    ShowTime();
+    showWifi();
+    showTime();
     httpServer.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {
       request->send(SD, "/index.html", "text/html");
     });
     httpServer.serveStatic("/", SD, "/www/").setFilter(ON_STA_FILTER);
   }
 }
-
 /*
-   not used!
+   Title:       connectToWiFi
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
 bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, int pause = 500) {
   int i = 0;
@@ -208,21 +239,56 @@ bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, i
   WiFi.persistent(true);
   return isConnected();
 }
-
-
-
 /*
-  SSH Start.
+   Title:       
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-
-void StartSSH() {
-  //libssh_begin();
+void PutCalibrationValues(uint16_t xCalValue, uint16_t yCalValue){
+  if(!EEPROM.begin(50)){
+    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
+  }
+  EEPROM.write(25,0xA5);
+  uint8_t xCalHigh, xCalLow, yCalHigh, yCalLow;
+  xCalHigh = xCalValue >> 8 & 0xFF;
+  xCalLow = xCalValue >> 0 & 0xFF;
+  yCalHigh = yCalValue >> 8 & 0xFF;
+  yCalLow = yCalValue >> 0 & 0xFF;
+  EEPROM.write(26, xCalHigh);
+  EEPROM.write(27, xCalLow);
+  EEPROM.write(28, yCalHigh);
+  EEPROM.write(29, yCalLow);
+  EEPROM.end();
 }
-void StopSSH() {
 
+bool GetCalibrationValues(){
+  if(!EEPROM.begin(50)){
+    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
+  }
+  uint8_t goodCal = 0;
+  uint8_t xValueHigh, xValueLow, yValueHigh, yValueLow;
+  goodCal = EEPROM.read(25);
+  if(goodCal == 0xA5){
+    xValueHigh = EEPROM.read(26);
+    xValueLow = EEPROM.read(27);
+    XOFFSET = xValueHigh << 8 | xValueLow;
+    yValueHigh = EEPROM.read(28);
+    yValueLow = EEPROM.read(29);
+    YOFFSET = yValueHigh << 8 | yValueLow;
+    EEPROM.end();
+    drawBanner();
+    display1.setCursor(20, 20);
+    display1.print("Values loaded");
+    display1.display();
+    delay(500);
+    return true;
+  }else
+  EEPROM.end();
+  return false;
 }
-
-
-
 
 #endif

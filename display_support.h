@@ -64,9 +64,15 @@
 Adafruit_SSD1306 display1(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 /*
-    sets up the display
+   Title:       InitDisplay
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Sets up the display
+   Input:       nothing
+   Returns:     nothing
 */
-void InitDisplay() {
+void initializeDisplay() {
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display1.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) { // Address 0x3C for 128x64
 
@@ -86,9 +92,15 @@ void InitDisplay() {
 }
 
 /*
-
+   Title:       DrawBanner
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Provides a new screen for UI
+   Input:       nothing
+   Returns:     nothing
 */
-void DrawBanner() {
+void drawBanner() {
   display1.clearDisplay();
   display1.drawRect(0, 0, 127, 63, WHITE);
   display1.setCursor(30, 5);
@@ -96,20 +108,72 @@ void DrawBanner() {
   display1.display();
 }
 /*
-   message display
+   Title:       errorMsg
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Handler for a fatal error, one that requires that the system be possibly restarted
+   Input:       String message, restart<true:false>
+   Returns:     nothing
 */
-void ShowMessage(String message) {
-  DrawBanner();
+void errorMsg(String error, bool restart = true) {
+  if (restart) {
+    drawBanner();
+    display1.setCursor(5, 15);
+    display1.print(error);
+    display1.display();
+    delay(2000);
+    ESP.restart();
+    delay(2000);
+  }
+}
+
+/*
+   Title:       ShowMessage
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Show a single line of info
+   Input:       message
+   Returns:
+*/
+void showMessage(String message) {
+  drawBanner();
   display1.setCursor(10, 50);
   display1.print(message);
   display1.display();
   delay(1000);
 }
 /*
-   Limits display
+   Title:       ShowBigMessage
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Show a two line message
+   Input:       message, mess1
+   Returns:
 */
-void ShowLimits() {
-  DrawBanner();
+void showBigMessage(String message, String mess1) {
+  drawBanner();
+  display1.setCursor(10, 20);
+  display1.print(message);
+  display1.setCursor(10, 30);
+  display1.print(mess1);
+  display1.display();
+  display1.display();
+  delay(1000);
+}
+/*
+   Title:       ShowLimits
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void showLimits() {
+  drawBanner();
   display1.setCursor(30, 20);
   display1.print("X Y X Y N N");
   display1.setCursor(30, 30);
@@ -120,29 +184,44 @@ void ShowLimits() {
   display1.display();
 }
 /*
-  The only BT command -> 'Connect:ssid,password'
+   Title:       ShowBTStart
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-void ShowBTStart() {
-  DrawBanner();
+void showBTStart() {
+  drawBanner();
   display1.setCursor(10, 20);
   display1.print("Bluetooth active!");
-  display1.setCursor(30, 35);
+  display1.setCursor(20, 35);
   display1.print("for 30 seconds");
   display1.setCursor(5, 50);
   display1.print("Enter your creds now");
   display1.display();
   delay(2500);
-  DrawBanner();
+  drawBanner();
   display1.setCursor(10, 20);
   display1.print("Bluetooth active!");
-  display1.setCursor(10, 35);
+  display1.setCursor(20, 35);
   display1.print("If completed.");
-  display1.setCursor(10, 50);
+  display1.setCursor(8, 50);
   display1.print("Wait for auto-login.");
   display1.display();
 }
-void ShowWifiCreds(String ssid, String passw) {
-  DrawBanner();
+/*
+   Title:       ShowWifiCreds
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void showWifiCreds(String ssid, String passw) {
+  drawBanner();
   display1.setCursor(10, 20);
   display1.print("Connecting to..");
   display1.setCursor(5, 40);
@@ -155,10 +234,16 @@ void ShowWifiCreds(String ssid, String passw) {
   delay(1000);
 }
 /*
-
+   Title:       ShowPosition
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-void ShowPosition() {
-  DrawBanner();
+void showPosition() {
+  drawBanner();
   display1.setCursor(20, 20);
   display1.print("X:");
   display1.setCursor(30, 20);
@@ -171,12 +256,17 @@ void ShowPosition() {
   display1.print("HEAD: UP");
   display1.display();
 }
-
 /*
-    Displays the current wifi setup
+   Title:       ShowWifi
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-void ShowWifi() {
-  DrawBanner();
+void showWifi() {
+  drawBanner();
   display1.setCursor(7, 15);
   display1.print("Wifi connected to");
   display1.setCursor(30, 25);
@@ -189,11 +279,16 @@ void ShowWifi() {
   display1.display();
   delay(1000);
 }
-
 /*
-    Show the time on last line oled.
+   Title:       ShowTime
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
 */
-void ShowTime() {
+void showTime() {
   configTime(utcOffsetInSeconds, 3600, ntpServer);
   display1.setCursor(5, 50);
   struct tm timeinfo;
@@ -205,8 +300,35 @@ void ShowTime() {
   display1.print(&timeinfo, "%a,%b,%d,%H:%M:%S");
   display1.display();
 }
-
 /*
+   Title:       ShowFreeMemory
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void showFreeMemory() {
+  uint32_t ram = ESP.getFreeHeap();
+  drawBanner();
+  display1.setCursor(22, 22);
+  display1.print("Available RAM:");
+  display1.setCursor(28, 37);
+  display1.print(ram);
+  display1.println(" Bytes");
+  display1.display();
+  showTime();
+}
+/*
+   Title:       ShowAccel
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+
   Diagnostics use - do not use
 
   void ShowAccel() {

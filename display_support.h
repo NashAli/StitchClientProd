@@ -247,11 +247,11 @@ void showPosition() {
   display1.setCursor(20, 20);
   display1.print("X:");
   display1.setCursor(30, 20);
-  display1.print(XPOS);
+  display1.print(XCPOS);
   display1.setCursor(20, 30);
   display1.print("Y:");
   display1.setCursor(30, 30);
-  display1.print(YPOS);
+  display1.print(YCPOS);
   display1.setCursor(20, 40);
   display1.print("HEAD: UP");
   display1.display();

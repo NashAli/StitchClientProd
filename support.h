@@ -39,7 +39,7 @@
   0 - 1/1
   1 - 1/2
   2 - 1/4
-  3 - 1/8   (not used)
+  3 - 1/8
   4 - 1/16  (not used)
   5 - 1/32  (not used)
 
@@ -68,6 +68,120 @@ void IRAM_ATTR CheckLimits() {
    Dear Complier, Error Messages, please let's have none of those.
    Please don't ignore me, I think you're ignoring me! I've seen you here before!
 */
+/*
+   Title:       markCurrentPlace
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: secure 50 bytes(0-24) for the ssid,pswd combo in EEPROM.
+                Byte 25 CalGood byte 0xA5, From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
+                Byte 32 GoodPosition byte 0x5A 33-34 XPOS, 35-36 YPOS.
+   Input:
+   Returns:
+*/
+void markCurrentPlace(){
+  if(!EEPROM.begin(50)){
+    EEPROM.begin(50);  /// 
+  }
+  EEPROM.write(32,0x5A);
+  uint8_t xposHigh, xposLow, yposHigh, yposLow;
+  xposHigh = XCPOS >> 8 & 0xFF;
+  xposLow = XCPOS >> 0 & 0xFF;
+  yposHigh = YCPOS >> 8 & 0xFF;
+  yposLow = YCPOS >> 0 & 0xFF;
+  EEPROM.write(33, xposHigh);
+  EEPROM.write(34, xposLow);
+  EEPROM.write(35, yposHigh);
+  EEPROM.write(36, yposLow);
+  EEPROM.end();
+}
+bool getCurrentPlace(){
+  uint8_t GoodPosition = 0;
+  uint8_t xValueHigh, xValueLow, yValueHigh, yValueLow;
+  GoodPosition = EEPROM.read(32);
+  if(GoodPosition == 0x5A){
+    xValueHigh = EEPROM.read(33);
+    xValueLow = EEPROM.read(34);
+    XCPOS = xValueHigh << 8 | xValueLow;
+    yValueHigh = EEPROM.read(35);
+    yValueLow = EEPROM.read(36);
+    YCPOS = yValueHigh << 8 | yValueLow;
+    EEPROM.end();
+    display1.clearDisplay();
+    display1.drawRect(0, 0, 127, 63, WHITE);
+    display1.setCursor(30, 5);
+    display1.print(OSNAME);
+    display1.display();
+    display1.setCursor(20, 20);
+    display1.print("Values loaded");
+    display1.display();
+    delay(500);
+    return true;
+  }else
+  EEPROM.end();
+  return false;
+}
+
+
+
+/*
+   Title:       
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+void PutCalibrationValues(uint16_t xCalValue, uint16_t yCalValue){
+  if(!EEPROM.begin(50)){
+    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
+  }
+  EEPROM.write(25,0xA5);
+  uint8_t xCalHigh, xCalLow, yCalHigh, yCalLow;
+  xCalHigh = xCalValue >> 8 & 0xFF;
+  xCalLow = xCalValue >> 0 & 0xFF;
+  yCalHigh = yCalValue >> 8 & 0xFF;
+  yCalLow = yCalValue >> 0 & 0xFF;
+  EEPROM.write(26, xCalHigh);
+  EEPROM.write(27, xCalLow);
+  EEPROM.write(28, yCalHigh);
+  EEPROM.write(29, yCalLow);
+  EEPROM.end();
+}
+
+bool GetCalibrationValues(){
+  if(!EEPROM.begin(50)){
+    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. (Byte 25 is Flags) From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
+  }
+  uint8_t goodCal = 0;
+  uint8_t xValueHigh, xValueLow, yValueHigh, yValueLow;
+  goodCal = EEPROM.read(25);
+  if(goodCal == 0xA5){
+    xValueHigh = EEPROM.read(26);
+    xValueLow = EEPROM.read(27);
+    XOFFSET = xValueHigh << 8 | xValueLow;
+    yValueHigh = EEPROM.read(28);
+    yValueLow = EEPROM.read(29);
+    YOFFSET = yValueHigh << 8 | yValueLow;
+    EEPROM.end();
+    display1.clearDisplay();
+    display1.drawRect(0, 0, 127, 63, WHITE);
+    display1.setCursor(30, 5);
+    display1.print(OSNAME);
+    display1.display();
+    display1.setCursor(20, 20);
+    display1.print("Values loaded");
+    display1.display();
+    delay(500);
+    return true;
+  }else
+  EEPROM.end();
+  return false;
+}
+
+
+
 
 /*
    Title:       InitMotorsPort
@@ -219,7 +333,7 @@ String GetPort(int pn) {
    Returns:     true if successful
 */
 bool IsAtDestination() {
-  if ((XPOS = XDEST) && (YPOS = YDEST)) {
+  if ((XCPOS == XDEST) && (YCPOS == YDEST)) {
     return true;
   } else {
     return false;
@@ -263,6 +377,85 @@ void ReadController() {
 void SetController() {
 
 }
+
+/*
+   Title:       IsXHome
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+*/
+bool IsXHome() {
+  ReadLimits();
+  if (limits & XHOME) {
+    return false;
+  } else return true;
+}
+/*
+   Title:       IsXMax
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
+*/
+bool IsXMax() {
+  ReadLimits();
+  if (limits & XMAX) {
+    return false;
+  } else return true;
+}
+/*
+   Title:       IsYHome
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
+*/
+bool IsYHome() {
+  ReadLimits();
+  if (limits & YHOME) {
+    return false;
+  } else return true;
+}
+/*
+   Title:       IsYMax
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:     true if successful
+*/
+bool IsYMax() {
+  ReadLimits();
+  if (limits & YMAX) {
+    return false;
+  } else return true;
+}
+
+/*
+   Title:       IsDeadStop
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Reads the accelerometer;returns true if not moving!
+                their respective axis.
+   Input:       nothing
+   Returns:     true if successful
+
+*/
+bool IsDeadStop() {
+  //reads the accellerometer, if not moving, return true.
+  return true;
+}
+
+
 /*
    Title:       IsNeedleUp
    Author:      zna
@@ -334,32 +527,10 @@ void CycleNeedle() {
   //  if needle is at NeedleUp then cycle the needle.
 }
 
-/*
-    Title:          MoveMotor
-    Author:         zna
-    Date:           01.21.22
-    Revision:       1.0.0
-    Description:    move the motor. Replaces moveXMotor & moveYMotor
-    Inputs:         <axis>,<steps>,<direction>
-    Returns:        nothing
-*/
-void MoveMotor(uint8_t axis, uint8_t steps, uint8_t dir) {
-  // read the axis and dir values
-  // translate to correct pre and post val
-  
-  uint8_t preval = (axis | steps | dir | 0b00000000);
-  uint8_t postval = (axis | steps | dir | 0b00001000);
-
-  mcp.writeRegister(MCP23017Register::GPIO_B, preval);      // send pre-step  AXIS STEP DIR - FWD STEP 1/4
-  mcp.writeRegister(MCP23017Register::GPIO_B, postval);     // send post-step
-  delayMicroseconds(2);                                   // step pulse width 1.9uSec (min. as per DRV8825 specs.)
-  mcp.writeRegister(MCP23017Register::GPIO_B, preval);      // send pre-step
-  showPosition();
-}
 
 
 /*
-   Title:       MoveXMotor
+   Title:       MoveXMotor OLD
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -497,67 +668,29 @@ void MoveYMotor(bool dir, int sm) {
    Compiler, I'll be back shortly. Just going out to clear my head. I'm going to
    the python club!! Where whitespace rules!
 */
+/*
+    Title:          moveMotor
+    Author:         zna
+    Date:           01.21.22
+    Revision:       1.0.0
+    Description:    move the motor. Replaces moveXMotor & moveYMotor
+    Inputs:         <axis>,<steps>,<direction>
+    Returns:        nothing
+*/
+void moveMotor(uint8_t axis, uint8_t steps, uint8_t dir) {
+  // read the axis and dir values
+  // translate to correct pre and post val
+  
+  uint8_t setupvalue = ((axis | steps | dir) | 0b00000000);
+  uint8_t cyclevalue = ((axis | steps | dir) | 0b00001000);
 
-/*
-   Title:       IsXHome
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description:
-   Input:
-   Returns:
-*/
-bool IsXHome() {
-  ReadLimits();
-  if (limits & XHOME) {
-    return false;
-  } else return true;
+  mcp.writeRegister(MCP23017Register::GPIO_B, setupvalue);      // send pre-step  AXIS STEP DIR - FWD STEP 1/4
+  mcp.writeRegister(MCP23017Register::GPIO_B, cyclevalue);     // send post-step
+  delayMicroseconds(2);                                   // step pulse width 1.9uSec (min. as per DRV8825 specs.)
+  mcp.writeRegister(MCP23017Register::GPIO_B, setupvalue);      // send pre-step
+  showPosition();
 }
-/*
-   Title:       IsXMax
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description:
-   Input:
-   Returns:     true if successful
-*/
-bool IsXMax() {
-  ReadLimits();
-  if (limits & XMAX) {
-    return false;
-  } else return true;
-}
-/*
-   Title:       IsYHome
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description:
-   Input:
-   Returns:     true if successful
-*/
-bool IsYHome() {
-  ReadLimits();
-  if (limits & YHOME) {
-    return false;
-  } else return true;
-}
-/*
-   Title:       IsYMax
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description:
-   Input:
-   Returns:     true if successful
-*/
-bool IsYMax() {
-  ReadLimits();
-  if (limits & YMAX) {
-    return false;
-  } else return true;
-}
+
 /*
    Title:       HomeX
    Author:      zna
@@ -568,9 +701,9 @@ bool IsYMax() {
    Returns:     nothing
 */
 void HomeX() {
-  while (!IsXHome & NeedleUp & XPOS > 0) {
-    MoveMotor(Axis::XAxis,Step::Full,Direction::Reverse);
-    XPOS = XPOS - 1;
+  while (!IsXHome & NeedleUp & XCPOS > 0) {
+    moveMotor(ENAXN,STEP_FULL,REVERSE);
+    XCPOS = XCPOS - 1;
     showPosition();
   }
   yield();
@@ -585,9 +718,9 @@ void HomeX() {
    Returns:     nothing
 */
 void HomeY() {
-  while (!IsYHome && NeedleUp && YPOS > 0) {
-    MoveMotor(Axis::YAxis,Step::Full,Direction::Reverse);
-    YPOS = YPOS - 1;
+  while (!IsYHome && NeedleUp && YCPOS > 0) {
+    moveMotor(ENAYN,STEP_FULL,REVERSE);
+    YCPOS = YCPOS - 1;
     showPosition();
   }
   yield();
@@ -605,21 +738,6 @@ void HomeY() {
 void HomeAll() {
   HomeX();
   HomeY();
-}
-/*
-   Title:       IsDeadStop
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description: Reads the accelerometer;returns true if not moving!
-                their respective axis.
-   Input:       nothing
-   Returns:     true if successful
-
-*/
-bool IsDeadStop() {
-  //reads the accellerometer, if not moving, return true.
-  return true;
 }
 
 /*

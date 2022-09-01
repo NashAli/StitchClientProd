@@ -39,7 +39,7 @@
   0 - 1/1
   1 - 1/2
   2 - 1/4
-  3 - 1/8   (not used)
+  3 - 1/8
   4 - 1/16  (not used)
   5 - 1/32  (not used)
 
@@ -60,7 +60,7 @@
 #define LED_BUILTIN 2   // Set the GPIO pin where you connected your test LED or comment this line out if your dev board has a built-in LED
 #define LAMP 34 //  GPIO34 - work lights via the ULN2803A pin 1.
 
-
+/*
 // Define MCP23017 registers values from datasheet
 #define IODIRA    0x00  // IO direction A - 1= input 0 = output - set as all INPUT 0xFF 
 #define IODIRB    0x01  // IO direction B - 1= input 0 = output - set as all OUTPUT 0x00
@@ -83,7 +83,7 @@
 #define GPIOB     0x13  // Data port B
 #define OLATA     0x14  // Output latches A - all limit sw. - X,Y,Needle Position
 #define OLATB     0x15  // Output latches B  - stepper motor controllers
-
+*/
 //MCP23017 - MOTOR_CONTROLLER @ 0x20
 //NOTE: INPUTS MASK (are all active low signals!(for now))
 #define NEEDLE_UP   0b10000000
@@ -107,8 +107,8 @@
 #define STEP_ONE_SIX        0b10000000
 #define STEP_ONE_THIRTY_TWO 0b10100000
 
-#define FOREWARD  0b1
-#define BACKWARD  0b0
+#define FORWARD  0b1
+#define REVERSE  0b0
 
 #define STEPPERREV  400       //  set the steps per revolution of the motor for 1:1 mode
 
@@ -184,6 +184,21 @@ String stars_sym =      "\u2728";
 //  MACHINE GLOBAL VARIABLES  ********************************************************
 
 String OSNAME = "eMB-OS V1.1";
+String _version_0 = AClearScreen + AHomeCursor;
+String _version_1 = ABrightCyan + ABold + tab + golf_sym + ABrightRed + ABold + pat_sym + ASlowBlink + OSNAME + AReset;
+String _version_2 = ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + "   V1.0.2" + AReset;
+String _version_3 = tab + ABrightYellow + cr_sym + ABrightCyan + "Graffiti Softwerks" + ABrightGreen + " All Rights Reserved 2021/2022";
+String _commandhelptitle = tab + tab + tab + ABrightBlue + "COMMAND HELP";
+
+
+/*
+SubCommandLevel
+0-System,1-Machine,2-FileSystem,3-Misc.
+
+
+*/
+
+int SubCommandLevel = 0;
 bool HELP_SYS = false;
 String commDesc[25];
 String commExample[25];
@@ -196,9 +211,11 @@ bool MOTORS_ACTIVE = false;
 bool AUX_READY = false;
 bool AUX_ACTIVE = false;
 bool ABORT_TEST = false;
-int XORG, YORG, XPOS, YPOS, XDEST, YDEST, XOFFSET, YOFFSET, SXHOME, SYHOME;
+int XORG, YORG, XCPOS, YCPOS, XDEST, YDEST, XOFFSET, YOFFSET, SXHOME, SYHOME;
 bool SYSTEM_BUSY = false;     //  OS is busy.
 bool MachineRun = false;      //  a motor is cycling (X-Y-Z).
+bool isSubCommand = false;    //  active sub command.
+bool isProcessing = false;    // check for command processor BUSY.
 bool LIMITS_FLAG = false;     //  a boundary has been breached.
 bool NeedleUp = false;        //  logic to manage the needle (Z) to keep it out of
 bool NeedleDown = false;      //  harms way when the fabric gantry is in motion.

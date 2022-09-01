@@ -39,7 +39,7 @@
   0 - 1/1
   1 - 1/2
   2 - 1/4
-  3 - 1/8   (not used)
+  3 - 1/8
   4 - 1/16  (not used)
   5 - 1/32  (not used)
 
@@ -238,57 +238,6 @@ bool connectToWiFi(const char* ssid, const char* password, int max_tries = 20, i
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
   return isConnected();
-}
-/*
-   Title:       
-   Author:      zna
-   Date:        01-22-22
-   Version:     1.0.0
-   Description:
-   Input:
-   Returns:
-*/
-void PutCalibrationValues(uint16_t xCalValue, uint16_t yCalValue){
-  if(!EEPROM.begin(50)){
-    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
-  }
-  EEPROM.write(25,0xA5);
-  uint8_t xCalHigh, xCalLow, yCalHigh, yCalLow;
-  xCalHigh = xCalValue >> 8 & 0xFF;
-  xCalLow = xCalValue >> 0 & 0xFF;
-  yCalHigh = yCalValue >> 8 & 0xFF;
-  yCalLow = yCalValue >> 0 & 0xFF;
-  EEPROM.write(26, xCalHigh);
-  EEPROM.write(27, xCalLow);
-  EEPROM.write(28, yCalHigh);
-  EEPROM.write(29, yCalLow);
-  EEPROM.end();
-}
-
-bool GetCalibrationValues(){
-  if(!EEPROM.begin(50)){
-    EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
-  }
-  uint8_t goodCal = 0;
-  uint8_t xValueHigh, xValueLow, yValueHigh, yValueLow;
-  goodCal = EEPROM.read(25);
-  if(goodCal == 0xA5){
-    xValueHigh = EEPROM.read(26);
-    xValueLow = EEPROM.read(27);
-    XOFFSET = xValueHigh << 8 | xValueLow;
-    yValueHigh = EEPROM.read(28);
-    yValueLow = EEPROM.read(29);
-    YOFFSET = yValueHigh << 8 | yValueLow;
-    EEPROM.end();
-    drawBanner();
-    display1.setCursor(20, 20);
-    display1.print("Values loaded");
-    display1.display();
-    delay(500);
-    return true;
-  }else
-  EEPROM.end();
-  return false;
 }
 
 #endif

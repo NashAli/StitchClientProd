@@ -331,7 +331,8 @@ void showFreeMemory() {
 
   Diagnostics use - do not use
 
-  void ShowAccel() {
+  void showAccel()
+  {
   sensors_event_t a, g;
   mpu.getEvent(&a, &g);
   display1.println("Accelerometer - m/s^2");
@@ -350,7 +351,7 @@ void showFreeMemory() {
   display1.println("");
   display1.display();
   }
-*/
 
+*/
 
 #endif

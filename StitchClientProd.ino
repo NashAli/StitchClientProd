@@ -85,20 +85,21 @@ void setup() {
   //initializeSensorGroup();
   initializeMotorsPort();
   initializeControllerPort();
+  initializeSensorGroup();
   setupTelnet();
   String logthis = ACyan + "System started@:" + AWhite + getASCIITime();
   logToSD(logthis);
   showFreeMemory();
-  if (GetCalibrationValues()){
+  if (getCalibrationValues()){
     //HomeAll
-    HomeAll();
+    homeAll();
   }
 }
 
 void loop() { 
   touchValue = touchRead(EstopPin);
   if (touchValue < touch_threshold) {
-    EStopMachine();
+    eStopMachine();
   }
   telnet.loop();
 }

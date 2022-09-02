@@ -183,7 +183,7 @@ String stars_sym =      "\u2728";
 */
 //  MACHINE GLOBAL VARIABLES  ********************************************************
 
-String OSNAME = "eMB-OS V1.1";
+String OSNAME = "eMB-OS";
 String _version_0 = AClearScreen + AHomeCursor;
 String _version_1 = ABrightCyan + ABold + tab + golf_sym + ABrightRed + ABold + pat_sym + ASlowBlink + OSNAME + AReset;
 String _version_2 = ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + "   V1.0.2" + AReset;
@@ -217,8 +217,6 @@ bool MachineRun = false;      //  a motor is cycling (X-Y-Z).
 bool isSubCommand = false;    //  active sub command.
 bool isProcessing = false;    // check for command processor BUSY.
 bool LIMITS_FLAG = false;     //  a boundary has been breached.
-bool NeedleUp = false;        //  logic to manage the needle (Z) to keep it out of
-bool NeedleDown = false;      //  harms way when the fabric gantry is in motion.
 bool CalGood = false;         //  calibration has been completed sucessfully.
 // MCP23017 - AUXILLARY_CONTROLLER @ 0x21
 bool Verbosity = true;        //  setting for communications protocol. Application can control response type ALPHA/NUMERIC
@@ -234,7 +232,7 @@ int MWAIT = 10;               //  motor wait timing
 const int touch_threshold = 20;
 // variable for storing the touch pin temporary value
 int touchValue;
-
+// some network specific parameters.
 const int httpPort = 80;
 const int telnetPort = 23;
 const int serverPort = 4080;
@@ -243,6 +241,7 @@ const char* appwd = "sewpatch";
 const char* ntpServer = "ca.pool.ntp.org";
 const int LOCAL_TIME_OFFSET = -5;
 const long utcOffsetInSeconds = 3600 * LOCAL_TIME_OFFSET;
+// my watchdog.
 unsigned long startMillis;
 unsigned long currentMillis;
 
@@ -262,6 +261,7 @@ AsyncWebServer httpServer(80);
 WiFiClient client;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
+
 
 struct Position  
 {
@@ -288,7 +288,8 @@ enum class SYSTEM_STATUS : byte
    Input:       <on:off>
    Returns:     nothing
 */
-void lamp(int v) {
+void lamp(int v)
+{
   if (v == 0) {
     digitalWrite(LAMP, LOW);
   } else {
@@ -304,7 +305,8 @@ void lamp(int v) {
    Input:       nothing
    Returns:     time in ascii string format.
 */
-String getASCIITime() {
+String getASCIITime()
+{
   time_t rawtime;
   struct tm *info;
   time( &rawtime );
@@ -322,7 +324,8 @@ String getASCIITime() {
    Input:
    Returns:
 */
-String getMotorVoltage() {
+String getMotorVoltage()
+{
   uint16_t vbat = analogRead(MVOLT_PIN);
   float battery_voltage = ((float)vbat / 4095.0) * 3.3 * (1184 / 1000.0);
   String voltage =  String(battery_voltage);
@@ -340,7 +343,8 @@ String getMotorVoltage() {
    Input:
    Returns:
 */
-int stringToInteger(String cpv, int m) {
+int stringToInteger(String cpv, int m)
+{
   int iv;
   return iv = strtoul(cpv.c_str(), 0, m);
 }
@@ -354,7 +358,8 @@ int stringToInteger(String cpv, int m) {
    Input:
    Returns:
 */
-String integerToHexString(int v) {
+String integerToHexString(int v)
+{
   char hex_string[20];
   sprintf(hex_string, "%2X", v); //convert number to hex
   return hex_string;
@@ -368,7 +373,8 @@ String integerToHexString(int v) {
    Input:       none
    Returns:     HelpArray
 */
-void loadHelp() {
+void loadHelp()
+{
 
 }
 /*
@@ -380,7 +386,8 @@ void loadHelp() {
    Input:       none
    Returns:     unloads the HelpArray
 */
-void unloadHelp() {
+void unloadHelp()
+{
 
 }
 #endif

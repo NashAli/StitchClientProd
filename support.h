@@ -58,7 +58,8 @@ MCP23017 acp = MCP23017(AuxControl);
 /*
   *************************************** INTERRUPT HANDLER *****************************
 */
-void IRAM_ATTR CheckLimits() {
+void IRAM_ATTR checkLimits()
+{
   limits = mcp.readPort(MCP23017Port::A);
   // set a flag for OS, new limits is available and needs attention quickly.
   LIMITS_FLAG = true;
@@ -69,7 +70,7 @@ void IRAM_ATTR CheckLimits() {
    Please don't ignore me, I think you're ignoring me! I've seen you here before!
 */
 /*
-   Title:       markCurrentPlace
+   Title:       mark/get CurrentPlace
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -79,8 +80,10 @@ void IRAM_ATTR CheckLimits() {
    Input:
    Returns:
 */
-void markCurrentPlace(){
-  if(!EEPROM.begin(50)){
+void markCurrentPlace()
+{
+  if(!EEPROM.begin(50))
+  {
     EEPROM.begin(50);  /// 
   }
   EEPROM.write(32,0x5A);
@@ -95,11 +98,14 @@ void markCurrentPlace(){
   EEPROM.write(36, yposLow);
   EEPROM.end();
 }
-bool getCurrentPlace(){
+
+bool getCurrentPlace()
+{
   uint8_t GoodPosition = 0;
   uint8_t xValueHigh, xValueLow, yValueHigh, yValueLow;
   GoodPosition = EEPROM.read(32);
-  if(GoodPosition == 0x5A){
+  if(GoodPosition == 0x5A)
+  {
     xValueHigh = EEPROM.read(33);
     xValueLow = EEPROM.read(34);
     XCPOS = xValueHigh << 8 | xValueLow;
@@ -123,6 +129,33 @@ bool getCurrentPlace(){
 }
 
 
+void testSensor(){
+ Serial.begin(115200);
+  while (!Serial)
+    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+
+  Serial.println("Adafruit MPU6050 test!");
+
+  // Try to initialize!
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  Serial.println("MPU6050 Found!");
+
+  //setupt motion detection
+  mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
+  mpu.setMotionDetectionThreshold(1);
+  mpu.setMotionDetectionDuration(20);
+  mpu.setInterruptPinLatch(true);	// Keep it latched.  Will turn off when reinitialized.
+  mpu.setInterruptPinPolarity(true);
+  mpu.setMotionInterrupt(true);
+
+  Serial.println("");
+  delay(100);
+  }
 
 /*
    Title:       
@@ -133,8 +166,10 @@ bool getCurrentPlace(){
    Input:
    Returns:
 */
-void PutCalibrationValues(uint16_t xCalValue, uint16_t yCalValue){
-  if(!EEPROM.begin(50)){
+void putCalibrationValues(uint16_t xCalValue, uint16_t yCalValue)
+{
+  if(!EEPROM.begin(50))
+  {
     EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
   }
   EEPROM.write(25,0xA5);
@@ -150,8 +185,10 @@ void PutCalibrationValues(uint16_t xCalValue, uint16_t yCalValue){
   EEPROM.end();
 }
 
-bool GetCalibrationValues(){
-  if(!EEPROM.begin(50)){
+bool getCalibrationValues()
+{
+  if(!EEPROM.begin(50))
+  {
     EEPROM.begin(50);  /// secure 25 bytes(0-24) for the ssid,pswd combo in EEPROM. (Byte 25 is Flags) From Bytes 26-27(XOFFSET-16bit),Bytes 28-29(YOFFSET-16bit).
   }
   uint8_t goodCal = 0;
@@ -192,8 +229,10 @@ bool GetCalibrationValues(){
    Input:       nothing
    Returns:     nothing
 */
-void initializeMotorsPort() {
-  if (MOTORS_ACTIVE) {
+void initializeMotorsPort()
+{
+  if (MOTORS_ACTIVE)
+  {
     mcp.init();
     mcp.portMode(MCP23017Port::A, 0xFF);  //Port A as inputs
     mcp.portMode(MCP23017Port::B, 0);     //Port B as outputs
@@ -204,13 +243,15 @@ void initializeMotorsPort() {
     mcp.writeRegister(MCP23017Register::IPOL_B, 0x00);
     mcp.writeRegister(MCP23017Register::GPIO_A, 0x00);  //Reset port A
     mcp.writeRegister(MCP23017Register::GPIO_B, 0x06);  //Reset port B to default value()
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++)
+    {
       mcp.pinMode(i, INPUT_PULLUP, true);
     }
-    for (int i = 8; i < 16; i++) {
+    for (int i = 8; i < 16; i++)
+    {
       mcp.pinMode(i, OUTPUT);
     }
-    attachInterrupt(digitalPinToInterrupt(ML_INTA), CheckLimits, FALLING);
+    attachInterrupt(digitalPinToInterrupt(ML_INTA), checkLimits, FALLING);
     //set the limits interrupt to GPIO32
     MOTORS_READY = true;
     drawBanner();
@@ -218,7 +259,8 @@ void initializeMotorsPort() {
     display1.print("Motors in!");
     display1.display();
     delay(500);
-  } else {
+  } else
+  {
     MOTORS_READY = false;
     drawBanner();
     display1.setCursor(20, 20);
@@ -237,7 +279,8 @@ void initializeMotorsPort() {
    Returns:     nothing
 */
 void initializeControllerPort() {
-  if (AUX_ACTIVE) {
+  if (AUX_ACTIVE)
+  {
     acp.init();
     acp.portMode(MCP23017Port::A, 0xFF);  //Port A as in
     acp.portMode(MCP23017Port::B, 0);           //Port B as out
@@ -248,7 +291,8 @@ void initializeControllerPort() {
     display1.print("Remote Control in");
     display1.display();
     delay(500);
-  } else {
+  } else
+  {
     drawBanner();
     display1.setCursor(25, 20);
     display1.print("No Remote");
@@ -265,7 +309,8 @@ void initializeControllerPort() {
    Input:       port name<A:B>, pin number<0-7>, value<H:L>
    Returns:     nothing
 */
-void SetPortPin(int pn, int pp, bool v) {
+void setPortPin(int pn, int pp, bool v)
+{
   //mcp.setPin(pn,pp,v);
 }
 /*
@@ -277,7 +322,8 @@ void SetPortPin(int pn, int pp, bool v) {
    Input:       port name<A:B>,<0-7>
    Returns:     pin value <H:L>
 */
-bool GetPortPin(int pn, int pp) {
+bool getPortPin(int pn, int pp)
+{
   int comval = 0;
   comval = mcp.readPort(MCP23017Port::A);
 }
@@ -290,7 +336,8 @@ bool GetPortPin(int pn, int pp) {
    Input:       port name<A:B>, value<0-7>
    Returns:     nothing
 */
-void SetPort(int pn, int v) {
+void setPort(int pn, int v)
+{
   if (pn == 1) {
     mcp.writeRegister(MCP23017Register::GPIO_A, v);//  Set port A
   }
@@ -307,7 +354,8 @@ void SetPort(int pn, int v) {
    Input:       port name<A:B>
    Returns:     Hex string value
 */
-String GetPort(int pn) {
+String getPort(int pn)
+{
   int comval;
   if (pn == 1) {
     comval = mcp.readPort(MCP23017Port::A);
@@ -332,10 +380,13 @@ String GetPort(int pn) {
    Input:       nothing
    Returns:     true if successful
 */
-bool IsAtDestination() {
-  if ((XCPOS == XDEST) && (YCPOS == YDEST)) {
+bool isAtDestination()
+{
+  if ((XCPOS == XDEST) && (YCPOS == YDEST))
+  {
     return true;
-  } else {
+  } else
+  {
     return false;
   }
 
@@ -350,7 +401,8 @@ bool IsAtDestination() {
    Input:       nothing
    Returns:     nothing
 */
-void ReadLimits() {
+void readLimits()
+{
   limits = mcp.readPort(MCP23017Port::A);
 }
 /*
@@ -362,7 +414,8 @@ void ReadLimits() {
    Input:       nothing
    Returns:     Port A value
 */
-void ReadController() {
+void readController()
+{
   comval = acp.readPort(MCP23017Port::A);
 }
 /*
@@ -374,7 +427,8 @@ void ReadController() {
    Input:       nothing
    Returns:     nothing
 */
-void SetController() {
+void setController()
+{
 
 }
 
@@ -387,14 +441,16 @@ void SetController() {
    Input:
    Returns:
 */
-bool IsXHome() {
-  ReadLimits();
-  if (limits & XHOME) {
+bool isXHome()
+{
+  readLimits();
+  if (limits && XHOME)
+  {
     return false;
   } else return true;
 }
 /*
-   Title:       IsXMax
+   Title:       isXMax
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -402,9 +458,11 @@ bool IsXHome() {
    Input:
    Returns:     true if successful
 */
-bool IsXMax() {
-  ReadLimits();
-  if (limits & XMAX) {
+bool isXMax()
+{
+  readLimits();
+  if (limits && XMAX)
+  {
     return false;
   } else return true;
 }
@@ -417,9 +475,10 @@ bool IsXMax() {
    Input:
    Returns:     true if successful
 */
-bool IsYHome() {
-  ReadLimits();
-  if (limits & YHOME) {
+bool isYHome()
+{
+  readLimits();
+  if (limits && YHOME) {
     return false;
   } else return true;
 }
@@ -432,15 +491,16 @@ bool IsYHome() {
    Input:
    Returns:     true if successful
 */
-bool IsYMax() {
-  ReadLimits();
-  if (limits & YMAX) {
+bool isYMax()
+{
+  readLimits();
+  if (limits && YMAX) {
     return false;
   } else return true;
 }
 
 /*
-   Title:       IsDeadStop
+   Title:       isDeadStop
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -450,7 +510,8 @@ bool IsYMax() {
    Returns:     true if successful
 
 */
-bool IsDeadStop() {
+bool isDeadStop()
+{
   //reads the accellerometer, if not moving, return true.
   return true;
 }
@@ -465,9 +526,10 @@ bool IsDeadStop() {
    Input:       nothing
    Returns:     true if needle is up
 */
-bool IsNeedleUp() {
-  ReadLimits();
-  if (limits & NEEDLE_UP) {
+bool isNeedleUp()
+{
+  readLimits();
+  if (limits && NEEDLE_UP) {
     return false;
   } else return true;
 }
@@ -480,9 +542,10 @@ bool IsNeedleUp() {
    Input:       nothing
    Returns:     true if needle is down
 */
-bool IsNeedleDown() {
-  ReadLimits();
-  if (limits & NEEDLE_DOWN) {
+bool isNeedleDown()
+{
+  readLimits();
+  if (limits && NEEDLE_DOWN) {
     return false;
   } else return true;
 }
@@ -495,7 +558,8 @@ bool IsNeedleDown() {
    Input:       nothing
    Returns:     nothing
 */
-void SetNeedleUp() {
+void setNeedleUp()
+{
   // while
   // !IsNeedleUp()
   // run needle motor
@@ -509,7 +573,8 @@ void SetNeedleUp() {
    Input:       nothing
    Returns:     nothing
 */
-void SetNeedleDown() {
+void setNeedleDown()
+{
   // while
   // !IsNeedleDown()
   // run needle motor
@@ -523,7 +588,8 @@ void SetNeedleDown() {
    Input:       nothing
    Returns:     nothing
 */
-void CycleNeedle() {
+void cycleNeedle()
+{
   //  if needle is at NeedleUp then cycle the needle.
 }
 
@@ -677,7 +743,8 @@ void MoveYMotor(bool dir, int sm) {
     Inputs:         <axis>,<steps>,<direction>
     Returns:        nothing
 */
-void moveMotor(uint8_t axis, uint8_t steps, uint8_t dir) {
+void moveMotor(uint8_t axis, uint8_t steps, uint8_t dir)
+{
   // read the axis and dir values
   // translate to correct pre and post val
   
@@ -700,12 +767,15 @@ void moveMotor(uint8_t axis, uint8_t steps, uint8_t dir) {
    Input:       nothing
    Returns:     nothing
 */
-void HomeX() {
-  while (!IsXHome & NeedleUp & XCPOS > 0) {
-    moveMotor(ENAXN,STEP_FULL,REVERSE);
-    XCPOS = XCPOS - 1;
-    showPosition();
-  }
+void homeX()
+{
+
+do
+{
+  moveMotor(ENAXN,STEP_FULL,REVERSE);
+  XCPOS = XCPOS - 1;
+  showPosition();
+} while (!isXHome() && isNeedleUp() && XCPOS > 0);
   yield();
 }
 /*
@@ -717,12 +787,15 @@ void HomeX() {
    Input:       nothing
    Returns:     nothing
 */
-void HomeY() {
-  while (!IsYHome && NeedleUp && YCPOS > 0) {
+void homeY()
+{
+
+  do
+  {
     moveMotor(ENAYN,STEP_FULL,REVERSE);
     YCPOS = YCPOS - 1;
     showPosition();
-  }
+  } while (!isYHome() && isNeedleUp() && YCPOS > 0);
   yield();
 }
 /*
@@ -735,9 +808,10 @@ void HomeY() {
    Input:       nothing
    Returns:     nothing
 */
-void HomeAll() {
-  HomeX();
-  HomeY();
+void homeAll()
+{
+  homeX();
+  homeY();
 }
 
 /*
@@ -749,7 +823,8 @@ void HomeAll() {
    Input:
    Returns:
 */
-void GotoPoint(int xpos, int ypos) {
+void gotoPoint(int xpos, int ypos)
+{
 
 }
 /*
@@ -761,10 +836,11 @@ void GotoPoint(int xpos, int ypos) {
    Input:       function number
    Returns:     nothing
 */
-void RunNeedleTest(int m) {
+void runNeedleTest(int m)
+{
   switch (m) {
     case 0:
-      if (IsNeedleUp) {
+      if (isNeedleUp()) {
         //run motor till IsNeedleDown
         //run motor to IsNeeldeUp, then stop
       }
@@ -778,6 +854,24 @@ void RunNeedleTest(int m) {
       break;
   }
 }
+
+/*
+
+   Title:       calibration
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description:
+   Input:
+   Returns:
+
+   confirms the success of calibration by plotting a small grid which can be measured for accuracy!
+*/
+void calibration()
+{
+
+}
+
 /*
 
    Title:       TestCalibration
@@ -790,7 +884,8 @@ void RunNeedleTest(int m) {
 
    confirms the success of calibration by plotting a small grid which can be measured for accuracy!
 */
-void TestCalibration() {
+void testCalibration()
+{
 
 }
 /*
@@ -802,10 +897,11 @@ void TestCalibration() {
     Inputs:         nothing
     Returns:        true if successful
 */
-bool SetHardHome(){
-  HomeX();
-  HomeY();
-  PutCalibrationValues(XORG,YORG);
+bool setHardHome()
+{
+  homeX();
+  homeY();
+  putCalibrationValues(XORG,YORG);
   return true;
 }
 
@@ -818,10 +914,14 @@ bool SetHardHome(){
    Input:
    Returns:
 */
-void StitchHere() {
-  while (IsDeadStop) {
+void stitchHere()
+{
 
-  }
+do
+{
+  /* code */
+} while (isDeadStop());
+
 
 }
 /*
@@ -833,7 +933,8 @@ void StitchHere() {
    Input:
    Returns:
 */
-void CheckStatus() {
+void checkStatus()
+{
 
 }
 
@@ -846,8 +947,10 @@ void CheckStatus() {
    Input:
    Returns:
 */
-void EStopMachine() {
+void eStopMachine()
+{
   //stop all motors, preserve all values, set needle up
+  setNeedleUp();
   drawBanner();
   display1.setCursor(20, 15);
   display1.print("EMERGENCY STOP!");
@@ -889,7 +992,8 @@ void EStopMachine() {
   to manage performance and no bad data woes.  The i2c_scanner uses the return value of the Write.endTransmisstion to
   see if a device did acknowledge to the address.
 */
-void scanI2CBus() {
+void scanI2CBus()
+{
   int lastRow = 50;
   byte error, address;
   int nDevices;

@@ -183,7 +183,7 @@ String stars_sym =      "\u2728";
 */
 //  MACHINE GLOBAL VARIABLES  ********************************************************
 
-String OSNAME = "eMB-OS";
+String OSNAME = "eMB-OS V1.0";
 String _version_0 = AClearScreen + AHomeCursor;
 String _version_1 = ABrightCyan + ABold + tab + golf_sym + ABrightRed + ABold + pat_sym + ASlowBlink + OSNAME + AReset;
 String _version_2 = ABrightYellow + ABold + tm_sym + AReset + ABrightGreen + "   V1.0.2" + AReset;
@@ -350,7 +350,7 @@ int stringToInteger(String cpv, int m)
 }
 /*
 
-   Title:       Convert integer to hexadecimal string
+   Title:       Convert integer to hexadecimal string.
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -361,15 +361,20 @@ int stringToInteger(String cpv, int m)
 String integerToHexString(int v)
 {
   char hex_string[20];
-  sprintf(hex_string, "%2X", v); //convert number to hex
+  sprintf(hex_string, "%2X", v); //convert number to hex.
   return hex_string;
+}
+void checkHelp(){
+  HELP_SYS = false;
+  //check the SD Card for the help-system file BODEGA.dba. HELP_SYS = true.
+  //this file is simple comma delimited string to Memory Array.
 }
 /*
    Title:       LoadHelp
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
-   Description: Loads the help system arrays
+   Description: Loads the help system arrays.
    Input:       none
    Returns:     HelpArray
 */

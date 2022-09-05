@@ -3,8 +3,12 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**"
-                "C:/Program Files (x86)/Arduion/hardware/arduino/avr/cores/arduino",
+                "${workspaceRoot}",
+                "${workspaceFolder}/**",
+                "C:\\Users\\nash4\\My Documents\\Arduino\\hardware\\**",
+                "C:\\Users\\nash4\\My Documents\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**"
             ],
             "defines": [
                 "_DEBUG",

@@ -85,7 +85,7 @@ void setup() {
   //initializeSensorGroup();
   initializeMotorsPort();
   initializeControllerPort();
-  initializeSensorGroup();
+  //initializeSensorGroup();
   setupTelnet();
   String logthis = ACyan + "System started@:" + AWhite + getASCIITime();
   logToSD(logthis);

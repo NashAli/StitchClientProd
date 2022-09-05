@@ -857,7 +857,7 @@ void runNeedleTest(int m)
 
 /*
 
-   Title:       calibration
+   Title:       calibrate
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
@@ -865,9 +865,9 @@ void runNeedleTest(int m)
    Input:
    Returns:
 
-   confirms the success of calibration by plotting a small grid which can be measured for accuracy!
+   runs calibration!
 */
-void calibration()
+void calibrate()
 {
 
 }
@@ -1102,7 +1102,7 @@ void initializeSensorGroup() {
   display1.setCursor(30, 30);
   display1.print("-Registered-");
   display1.display();
-  delay(2000);
+  delay(1000);
 }
 /*
    Title:       

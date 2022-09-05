@@ -176,10 +176,10 @@ void responsePrompt(int rr, int rt, int ptr)
   now if you are connected via telnet via the AP then the "No networks found" might make sense
   but on the other hand, if connected via a Router then No Networks found, doesn't get there!!!
 */
-void TelNetScan()
+void TelNetworkScan()
 {
   responsePrompt(1, 0, SubCommandLevel + 1); //subsystem prompt
-  telnet.println( ACyan + "Scanning the Local Area Network..." + AReset);
+  telnet.println( ACyan + "Scanning the Local Area Network...STAND BY." + AReset);
   WiFi.scanDelete();
   int nn = WiFi.scanNetworks();
   responsePrompt(1, 0, SubCommandLevel + 1); //subsystem prompt
@@ -260,7 +260,7 @@ void TelNetScan()
   responsePrompt(1, 0, SubCommandLevel + 1); //OK,system prompt
 }
 /*
-   Displays system & network status.
+   Displays operating system & network status.
 */
 
 void TelSysStat()
@@ -276,7 +276,7 @@ void TelSysStat()
   telnet.println();
   telnet.println(ABrightCyan + "System Status:" + AReset);
   telnet.println(ABrightYellow +  "SDK Ver:                 " + ABrightWhite + ESP.getSdkVersion() + AReset);
-  telnet.println(ABrightGreen +  "Sketch Size:             " + ABrightCyan + ESP.getSketchSize() + ABrightYellow + " Bytes." + AReset);
+  telnet.println(ABrightGreen +  "Program Size:            " + ABrightCyan + ESP.getSketchSize() + ABrightYellow + " Bytes." + AReset);
   telnet.println(ABrightCyan +  "Free Heap Size:          " + ABrightBlue + ESP.getFreeHeap() + ABrightYellow + " Bytes." + AReset);
   telnet.println(ABrightGreen +  "CPU Freq:                " + ABrightMagenta + ESP.getCpuFreqMHz() + ABrightRed + " Mhz." + AReset);
   telnet.println(ABrightRed   +  "Chip Model:              " + ABrightCyan + ESP.getChipModel() +" - REV."+ ESP.getChipRevision() + AReset);
@@ -532,26 +532,7 @@ void TelLimitsTest()
   logToSD(AWhite + getASCIITime() + ABrightGreen + " --> limits test done.");
   responsePrompt(1, 0, SubCommandLevel + 1); //system prompt
 }
-/*
-   SELFTEST ************************************************************************************************
-   Selftest Help
-*/
-void TelSysTestHelp()
-{
-  telClear();
-  telnet.println();
-  telnet.println(tab + tab + tab + ABrightYellow + "Test Help!");
-  telnet.println();
-  telnet.println(ABrightBlue + tab + "test -<help:?>     " + tab + AWhite + "- Shows this command help.");
-  telnet.println(ABrightBlue + tab + "test -Q <-X:Y:B>   " + tab + AWhite + "- Selects the motor axis to test, X, Y or both.");
-  telnet.println(ABrightBlue + tab + "test -M            " + tab + AWhite + "- Manual mode.");
-  telnet.println(ABrightBlue + tab + "test -N <-c:o:kill>" + tab + AWhite + "- Needle motor test, o - oneshot or a 1 sec burst.");
-  telnet.println(ABrightBlue + tab + "test -I            " + tab + AWhite + "- I2c system discovery test.");
-  telnet.println(ABrightBlue + tab + "test -L            " + tab + AWhite + "- Limit sensor test.");
-  telnet.println(ABrightBlue + tab + "test -C            " + tab + AWhite + "- Calibration plot test.(requires a paper paddle)");
-  telnet.println(ABrightBlue + tab + "test -X            " + tab + AWhite + "- Exit test mode." + AReset);
-  responsePrompt(1, 0, SubCommandLevel + 1); //system prompt.
-}
+
 
 void TelManualModeHelp()
 {
@@ -587,7 +568,7 @@ void TelRunXTest()
   responsePrompt(1, 0, SubCommandLevel + 1);
 }
 /*
-   ******************************************************** Y Motor Test DRV8825
+   ****************************************************** Y Motor Test DRV8825
 */
 void TelRunYTest()
 {
@@ -788,28 +769,29 @@ void TelManualMode()
 
 //********************************************************** System Diagnostics - motor test, remote test,...
 
-void TelSysTests()
+void TelSystemTests(String subcommand)
 {
-  SubCommandLevel = 1;// Hardware.
-  
 
-/*
-
-  telnet.print(AReset);
-  if (p1 == "?" || p1 == "help" || p1 == "test") {
-    TelSysTestHelp();
-  }
-
-  //****************************** Voltage Test ********************************
-  if (p1 == "V" || p1 == "v") {
+  // SubCommandLevel = 1;// Hardware.
+   //****************************** Voltage Test ********************************
+  if (subcommand == "V" || subcommand == "v") {
     TelMotorVoltageInfo();
   }
 
-  //****************************** Limits Test ********************************
-  if (p1 == "L" || p1 == "l") {
+ //****************************** Limits Test ********************************
+  if (subcommand == "L" || subcommand == "l") {
     TelLimitsTest();
   }
 
+//****************************** BUS SCAN ****************************
+  if (subcommand == "I" || subcommand == "i") {
+    //TelI2CBusScan();
+    scanI2CBus();
+  }
+
+
+
+/*
   //****************************** Quick Motor Test ****************************
   if (p1 == "t" || p1 == "t") {
     telnet.println(ABrightYellow + "Quick Test " + ACyan + "set to test motor: " + ABrightBlue + p2 + AReset);
@@ -833,12 +815,7 @@ void TelSysTests()
    TelManualMode();
   }
 
-  //****************************** BUS SCAN ****************************
-  if (p1 == "I" || p1 == "i") {
-    //TelI2CBusScan();
-    scanI2CBus();
-  }
-
+  
   //****************************** NEEDLE TESTS ************************
   if (p1 == "N" || p1 == "n") {
     telnet.println(ABrightYellow + "SelfTest " + ACyan + "- set to test needle motor: " + ABrightRed + "CAUTION!"  + AReset);
@@ -859,8 +836,11 @@ void TelSysTests()
     testCalibration();  //  see support.h
   }
   */
-}
 
+
+  SubCommandLevel = 0;  //reset to top level.
+  isSubCommand = false; //subcommand cycle completed, clear subcommand flag.
+}
 
 
 /*
@@ -896,9 +876,83 @@ void TelSysCancel()
   responsePrompt(1, 0, SubCommandLevel + 1);
 }
 
+
+//  DIRECT  ************************************************************************************************
+void TelDirectG(String command)
+{
+  int se = command.length();
+  int xTag = command.indexOf('X:');
+  int yTag = command.indexOf('Y:', xTag + 1);
+  int endTag = command.indexOf(' ', yTag + 1);
+  String x_param = ABrightMagenta + "X= " + command.substring(xTag + 1, yTag - 1);
+  XDEST = command.substring(xTag + 1, yTag - 1).toInt();
+  String y_param = ABrightMagenta + "Y= " + command.substring(yTag + 1, endTag);
+  YDEST = command.substring(yTag + 1, endTag).toInt();
+  gotoPoint(XDEST, YDEST);
+  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+  telnet.println(x_param);
+  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+  telnet.println(y_param);
+  telnet.print(AReset);
+  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
+}
+void TelDirectW(String command)
+{
+  int se = command.length();
+  int xTag = command.indexOf('X:');
+  int yTag = command.indexOf('Y:', xTag + 1);
+  int zTag = command.indexOf(' ', yTag + 1);
+  String x_param = ABrightGreen + "X= " + command.substring(xTag + 1, yTag - 1);
+  XDEST = command.substring(xTag + 1, yTag - 1).toInt();
+  String y_param = ABrightGreen + "Y= " + command.substring(yTag + 1, zTag);
+  YDEST = command.substring(yTag + 1, zTag).toInt();
+  gotoPoint(XDEST, YDEST);
+  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+  telnet.println(x_param);
+  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+  telnet.println(y_param);
+  telnet.print(AReset);
+  responsePrompt(1, 0, SubCommandLevel + 1);
+}
+void TelDirectM(String command)
+{
+  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+  String param = command.substring(command.indexOf(' ') + 1, command.length());
+  telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + param + ".msf" + AReset);
+  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
+}
+void TelDirectT(String command)
+{
+  responsePrompt(0, 0, SubCommandLevel + 1);
+  // machine prompt only.
+  //TODO: add a GLOBAL THREAD VALUE in "system.h"
+  String t_param = command.substring(command.indexOf(' ') + 1, command.length());
+  telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
+  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
+}
+void TelDirectC(String command)
+{
+  if (MachineRun) {
+    responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
+    telnet.println(ABrightRed + "Job Paused" + AReset);
+    responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
+  }
+}
+void TelDirectV(String command)
+{
+  String blablabla = command.substring(command.indexOf(' ') + 1, command.length());
+  if (blablabla == "0" ) {
+    Verbosity = false;
+  } else {
+    Verbosity = true;
+  }
+  responsePrompt(1, 0, SubCommandLevel + 1);  //OK, system prompt - normal completion.
+}
+
+
 //**********************************  HELP SYSTEM ************************************************
 
-void TelGenHelp()
+void TelGeneralHelp()
 {
   telClear();
   telnet.println();
@@ -969,7 +1023,6 @@ void TelDiskHelp(String comm)
   telnet.print(tab + ABrightGreen  + "usage:" + cr + tab + tab + tab + ABrightCyan + commExample[x] + ABrightMagenta + commExtra[x] + nl + cr + AReset);
   //responsePrompt( 1, 0, SubCommandLevel + 1); //system prompt
 }
-
 /*
    Title:       WriteHelp
    Author:      zna
@@ -1090,17 +1143,11 @@ void TelLogsHelp()
   telnet.println(tab + ABrightRed + "log" + ABrightWhite + tab + "- displays/deletes log information.");
   telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "log-" + AMagenta + "<del:list>" + AReset);
 }
-void TelListFileHelp()
+void TelListFileHelp() 
 {
   telnet.println(_commandhelptitle);
   telnet.println(tab + ABrightRed + "list" + ABrightWhite + tab + "- dumps file to screen.");
   telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "list-" + AMagenta + "<dir><filename>" + AReset);
-}
-void TelBatteryHelp()
-{
-  telnet.println(_commandhelptitle);
-  telnet.println(tab + ABrightRed + "battery" + ABrightWhite + tab + "- reports the status of the battery.");
-  telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "battery/volts/bat/voltage" + AMagenta + "<y>" + AReset);
 }
 void TelRenameFileHelp()
 {
@@ -1123,11 +1170,17 @@ void TelWorklightHelp()
 void TelSystemTestsHelp()
 {
   telnet.println(_commandhelptitle);
-  telnet.println(tab + ABrightRed + "test" + ABrightWhite + cr + tab + tab + tab + "- runs system diagnostics");
+  telnet.println(tab + ABrightRed + "test" + ABrightWhite + cr + tab + tab + "- runs system diagnostics");
   telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "test-" + AMagenta + "<?:q:i:m:c:l>  see docs." + AReset);
 
 }
+void TelRunHelp()
+{
+  telnet.println(_commandhelptitle);
+  telnet.println(tab + ABrightRed + "run" + ABrightWhite + cr + tab + tab + "- runs job");
+  telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "run-" + AMagenta + "<jobname>  see docs." + AReset);
 
+}
 void TelHelpHelp()
 {
   TelNetScanHelp();
@@ -1142,95 +1195,32 @@ void TelHelpHelp()
   TelRemoveDirHelp();
   TelLogsHelp();
   TelListFileHelp();
-  TelBatteryHelp();
+  TelRunHelp();
   TelRenameFileHelp();
   TelFilesHelp();
   TelWorklightHelp();
   TelSystemTestsHelp();
   responsePrompt(1, 0, SubCommandLevel + 1);  //OK, system prompt - normal completion.
 }
-//  DIRECT  ************************************************************************************************
-void TelDirectG(String command)
-{
-  int se = command.length();
-  int xTag = command.indexOf('X:');
-  int yTag = command.indexOf('Y:', xTag + 1);
-  int endTag = command.indexOf(' ', yTag + 1);
-  String x_param = ABrightMagenta + "X= " + command.substring(xTag + 1, yTag - 1);
-  XDEST = command.substring(xTag + 1, yTag - 1).toInt();
-  String y_param = ABrightMagenta + "Y= " + command.substring(yTag + 1, endTag);
-  YDEST = command.substring(yTag + 1, endTag).toInt();
-  gotoPoint(XDEST, YDEST);
-  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-  telnet.println(x_param);
-  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-  telnet.println(y_param);
-  telnet.print(AReset);
-  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
-}
-void TelDirectW(String command)
-{
-  int se = command.length();
-  int xTag = command.indexOf('X:');
-  int yTag = command.indexOf('Y:', xTag + 1);
-  int zTag = command.indexOf(' ', yTag + 1);
-  String x_param = ABrightGreen + "X= " + command.substring(xTag + 1, yTag - 1);
-  XDEST = command.substring(xTag + 1, yTag - 1).toInt();
-  String y_param = ABrightGreen + "Y= " + command.substring(yTag + 1, zTag);
-  YDEST = command.substring(yTag + 1, zTag).toInt();
-  gotoPoint(XDEST, YDEST);
-  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-  telnet.println(x_param);
-  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-  telnet.println(y_param);
-  telnet.print(AReset);
-  responsePrompt(1, 0, SubCommandLevel + 1);
-}
-void TelDirectM(String command)
-{
-  responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-  String param = command.substring(command.indexOf(' ') + 1, command.length());
-  telnet.println(ABrightYellow + "MacroName: " + ABrightCyan + param + ".msf" + AReset);
-  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
-}
-void TelDirectT(String command)
-{
-  responsePrompt(0, 0, SubCommandLevel + 1);
-  // machine prompt only.
-  //TODO: add a GLOBAL THREAD VALUE in "system.h"
-  String t_param = command.substring(command.indexOf(' ') + 1, command.length());
-  telnet.println(ABrightRed + "Thread Change - " + ABrightWhite + t_param + AReset);
-  responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
-}
-void TelDirectC(String command)
-{
-  if (MachineRun) {
-    responsePrompt(0, 0, SubCommandLevel + 1);// machine prompt only.
-    telnet.println(ABrightRed + "Job Paused" + AReset);
-    responsePrompt(1, 0, SubCommandLevel + 1);//OK, system prompt - normal completion.
-  }
-}
-void TelDirectV(String command)
-{
-  String blablabla = command.substring(command.indexOf(' ') + 1, command.length());
-  if (blablabla == "0" ) {
-    Verbosity = false;
-  } else {
-    Verbosity = true;
-  }
-  responsePrompt(1, 0, SubCommandLevel + 1);  //OK, system prompt - normal completion.
-}
+
 /*
   ***************************************************** MISC  ******************************************
 */
 void TelQuit()
 {
+  if(!SubCommandLevel == 0){
+    responsePrompt(1, 0,SubCommandLevel + 1); //OK, subcommand system responsePrompt
+    SubCommandLevel = 0;
+  } else {
     SubCommandLevel = 0;
     isSubCommand = false;
     telnet.println("There is NO quit option here, so saving current configuration and location data...");
     markCurrentPlace();
     responsePrompt(1, 0,SubCommandLevel + 1); //OK, system responsePrompt
-}
+    }
+
+  }
+  
 /*
    Title:       TelUpdateInfo
    Author:      zna
@@ -1246,15 +1236,16 @@ void TelUpdateInfo()
 }
 
 // ------------------------------------------ COMMAND PARSER ------------------------------------------------------------------------------------------------------//
-
+/*
+parses the telnet entry and locates command instructions and completes the tasks
+*/
 void parseMainCommand(String command)
 {
   isProcessing = true;
-  //parses the telnet entry and locates instructions and completes the tasks
-  // ***************************  MAIN COMMANDS  *********************************************************************
   if(!isSubCommand && SubCommandLevel==0)
   {
-  // ************************************************************************** NULL HANDLER ***************
+  // ************************************ NON PARAMETER COMMANDS *******************************************
+  // ******************* NULL HANDLER ***************
     if (command.length() == 0)
     {
       responsePrompt(1, 5, SubCommandLevel + 1); //unknown - system prompt
@@ -1263,32 +1254,7 @@ void parseMainCommand(String command)
     {
       TelQuit();
     }
-// ***************************************************************************** SELFTEST *************
-    else if (command.startsWith("test"))
-    {
-      String param = command.substring(command.indexOf('-') + 1, command.length());
-      if (param == command || param == "?" || param == "help")
-      {
-        TelSystemTestsHelp();
-        responsePrompt(1,0,SubCommandLevel + 1);
-      }
-      else if (param == "y" || param == "Y") {
-      SubCommandLevel = 1;
-      responsePrompt(1, 0, SubCommandLevel + 1);
-      TelSysTests();
-      responsePrompt(1, 0, SubCommandLevel + 1);
-      }
-    }
-  // ********************************************************************************************* JOBS **********
-    else if (command == "jobs") {
-      SubCommandLevel = 2;
-      TelSysJobs();
-    }
-// ******************************************************************************************** READ HELP ********
-    else if (command == "read") {
-      TelReadQuickHelp();
-    }
-// ************************************************************************************************ SD CARD ********
+// ****************************************************************************************** SD CARD INFO ********
     else if (command.startsWith("sdca"))
     {
       String param = command.substring(command.indexOf('-') + 1, command.length());
@@ -1298,7 +1264,7 @@ void parseMainCommand(String command)
         TelSDCardInfo();
       }
     }
-// ************************************************************************************************ NETWORK *********
+// **************************************************************************************** NETWORK STATUS *********
     else if (command.startsWith("nets"))
     {
       String param = command.substring(command.indexOf('-') + 1, command.length());
@@ -1306,20 +1272,9 @@ void parseMainCommand(String command)
       if (param == command || param == "?" || param == "help") {
         TelNetScanHelp();
       } else if (param == "y" || param == "Y") {
-        TelNetScan();
+        TelNetworkScan();
       }
     }
-// ************************************************************************************************ CALIBRATE *********
-    else if (command.startsWith("cali"))
-    {
-      String param = command.substring(command.indexOf('-') + 1, command.length());
-      if  (param == command || param == "?" || param == "help") {
-        TelCalibrateHelp();
-      } else {
-        TelCalibrate();
-      }
-    }
-
 // ************************************************************************************************ STATS **********
     else if (command.startsWith("stat"))
     {
@@ -1341,17 +1296,62 @@ void parseMainCommand(String command)
     {
       responsePrompt(1, 0, SubCommandLevel + 1);
       String param = command.substring(command.indexOf('-') + 1, command.length());
-      if  (param == command || param == "?" || param == "help") {
+      if  (param == command || param == "?" || param == "help")
+        {
         responsePrompt(0, 0, SubCommandLevel + 1);
-        telnet.println(ABrightYellow + "usage: run -<jobname>");
-        responsePrompt(1, 0, SubCommandLevel + 1);
+        TelRunHelp();
       } else {
         responsePrompt(0, 0, SubCommandLevel + 1);
         telnet.println(ABrightYellow + "JobName: " + ABrightCyan + param + AReset);
         TelSysRun(param);
       }
     }
-// ********************************************************************************************* LOGS **********
+// ******************************************************************************************** HELP **********
+    else if (command.startsWith("help") || command.startsWith("?"))
+    {
+    String param = command.substring(command.indexOf('-') + 1, command.length());
+    if(param == command)
+      {
+        TelGeneralHelp();
+        
+      }
+    else if (param == "?" || param == "help")
+      {
+        TelHelpHelp();
+      }
+    }
+
+ // ********************************************************************************************* JOBS **********
+    else if (command == "jobs") {
+      SubCommandLevel = 2;
+      TelSysJobs();
+    }
+
+// ******************************************************************************************** READ HELP ********
+    else if (command == "read") {
+      TelReadQuickHelp();
+    }
+
+// ******************************* LEVEL 1 ************************************************************************
+// ******************************************************* SELFTEST *************
+    else if (command.startsWith("test"))
+    {
+      String param = command.substring(command.indexOf('-') + 1, command.length());
+      if (param == command || param == "?" || param == "help")
+      {
+        TelSystemTestsHelp();
+        responsePrompt(1,0,SubCommandLevel + 1);
+      }
+      else if (param == "y" || param == "Y") {
+      SubCommandLevel = 1;//HARDWARE RELATED.
+      isSubCommand = true;//set SubCommand flag, start SubCommand cycle.
+      responsePrompt(1, 0, SubCommandLevel + 1);
+      TelSystemTests(command);
+      responsePrompt(1, 0, SubCommandLevel + 1);
+      }
+    }
+ 
+// ******************************************************** LOGS **********
     else if (command.startsWith("log"))
     {
       String param = command.substring(command.indexOf('-') + 1, command.length());
@@ -1368,7 +1368,8 @@ void parseMainCommand(String command)
       }
       responsePrompt(1, 0, SubCommandLevel + 1);
     }
-// ************************************************************************************************ DUMP FILE **********
+
+// ********************************************************** DUMP FILE **********
     else if (command.startsWith("list"))
     {
       SubCommandLevel = 2;
@@ -1381,10 +1382,11 @@ void parseMainCommand(String command)
         TelListFile(param);
       }
     }
-// ************************************************************************************************ CREATE DIRECTORY **********
+
+// ******************************************************* CREATE DIRECTORY **********
     else if (command.startsWith("mkdir"))
     {
-      SubCommandLevel = 2;
+      SubCommandLevel = 2; // file operations.
       String param = command.substring(command.indexOf('-') + 1, command.length());
       if  (param == command || param == "?" || param == "help") {
         TelMakeDirHelp();
@@ -1394,10 +1396,13 @@ void parseMainCommand(String command)
         telnet.println(ABrightYellow + "Create Directory: " + ABrightCyan + param + AReset);
         TelMakeDir(param);
       }
+      SubCommandLevel = 0;
     }
-// ************************************************************************************************ REMOVE DIRECTORY **********
+
+// *********************************************************** REMOVE DIRECTORY **********
     else if (command.startsWith("rmdir"))
     {
+      SubCommandLevel = 2; // file operations.
       String param = command.substring(command.indexOf('-') + 1, command.length());
       if  (param == command || param == "?" || param == "help") {
         TelRemoveDirHelp();
@@ -1406,11 +1411,13 @@ void parseMainCommand(String command)
         telnet.println(ABrightYellow + "Remove Directory: " + ABrightCyan + param + AReset);
         TelRemoveDir(param);
       }
+      SubCommandLevel = 0;
     }
 
-// ************************************************************************************************ RENAME **********
+// ********************************************************************** RENAME **********
     else if (command.startsWith("rename"))
     {
+      SubCommandLevel = 2; // file rename operations.
       responsePrompt(1, 0, SubCommandLevel + 1);
       String param = command.substring(command.indexOf(' ') + 1, command.indexOf(',') - 1);
       String newname = command.substring(command.indexOf(',') + 1, command.length());
@@ -1422,32 +1429,40 @@ void parseMainCommand(String command)
         TelRenameFile(param, newname);
         logToSD(AWhite + getASCIITime() + ABrightRed + " --> file rename - " + param + " to " + newname);
       }
+      SubCommandLevel = 0;
     }
-// ************************************************************************************************ FILES *********
+
+// *************************************************************************** FILES *********
     else if (command.startsWith("files"))
     {
+      SubCommandLevel = 2;// file operations
       String param = command.substring(command.indexOf('-') + 1, command.length());
-      if (param == "?" || param == "help") {
+      if (param == command || param == "?" || param == "help") {
         TelFilesHelp();
       } else {
         TelSysFiles(param);
       }
-
+      SubCommandLevel = 0;
+      responsePrompt(1, 0, SubCommandLevel + 1);
     }
 
-// *************************************************************************************************** CANCEL *********
+// **************************************************************************** CANCEL *********
     else if (command.startsWith("cancel"))
     {
+      SubCommandLevel = 2;
       responsePrompt(1, 0, SubCommandLevel + 1);
       String param = command.substring(command.indexOf('-') + 1, command.length());
       if  (param == command || param == "?" || param == "help") {
         TelCancelHelp();
+        //TelHelp(command); future conversion.
       } else {
         TelSysCancel();
       }
+      SubCommandLevel = 0;
       responsePrompt(1, 0, SubCommandLevel + 1);
     }
-// ************************************************************************************************ WORKLIGHT **********
+
+// ************************************************************************** WORKLIGHT **********
     else if (command.startsWith("workl"))
     {
       SubCommandLevel = 1;
@@ -1465,24 +1480,14 @@ void parseMainCommand(String command)
           responsePrompt(0, 0, SubCommandLevel + 1 );
           telnet.println(ABrightYellow + "Setting LAMP ON" + AReset);
         }
-        responsePrompt(1, 0, SubCommandLevel + 1);
+        
       }
+      SubCommandLevel = 0;
+      responsePrompt(1, 0, SubCommandLevel + 1);
     }
-// ****************************** Help  ******************************    
-  else if (command == "?" || command == "help")
-  {
-    TelGenHelp();
-  }
-// ******************************************************************************************** HELP **********
-  else if (command.startsWith("help") || command.startsWith("?"))
-  {
-    String param = command.substring(command.indexOf('-') + 1, command.length());
-    if  (param == command || param == "?" || param == "help") {
-      TelHelpHelp();
-    }
-  }
-// ******************************************************************************************** DIRECT *********
-  else if (command.startsWith("#"))
+
+// **********************************************************  MACHINE  DIRECT  *****************
+  else if (command.startsWith("#"))//this is the comment line, simply ignore it.
   {
     responsePrompt(1, 0, SubCommandLevel + 1); //OK, system prompt - normal completion.
   }
@@ -1517,7 +1522,7 @@ void parseMainCommand(String command)
     TelDirectV(command);
   }
 
-// *********************************************************************************************** PORTS **********
+// **************************************************************************** PORTS **********
   else if (command.startsWith("getport"))
   {
     String param = command.substring(command.indexOf('-') + 1, command.length());
@@ -1559,7 +1564,8 @@ void parseMainCommand(String command)
       TelSetPort(param, pv);
     }
   }
-// ************************************************************************************************* PINS **********
+
+// ************************************************************************ PINS **********
   else if (command.startsWith("getpin"))
   {
     String param = command.substring(command.indexOf('-') + 1, command.indexOf(',') - 1);

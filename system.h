@@ -218,6 +218,8 @@ bool isSubCommand = false;    //  active sub command.
 bool isProcessing = false;    // check for command processor BUSY.
 bool LIMITS_FLAG = false;     //  a boundary has been breached.
 bool CalGood = false;         //  calibration has been completed sucessfully.
+char breakchar = 0x1A;        // break character CTRL-Z. controls KILLCYCLE.
+bool KILLCYCLE = false;
 // MCP23017 - AUXILLARY_CONTROLLER @ 0x21
 bool Verbosity = true;        //  setting for communications protocol. Application can control response type ALPHA/NUMERIC
 

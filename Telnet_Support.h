@@ -730,6 +730,26 @@ void TelGetPort(String p)
   }
   responsePrompt(1, 0, SubCommandLevel + 1); //OK,system prompt
 }
+
+/*
+  Cyclic read of a port
+*/
+void TelReadPort(String p){
+  do{
+    String pf = "";
+  if (p == "A" || p == "a") {
+    pf = getPort(1);
+    telnet.println( ABrightCyan + "Port A:" + ABrightWhite + " 0x" + pf + AReset + cr);
+  }
+  else {
+    pf = getPort(2);
+    telnet.println( ABrightCyan + "Port B:"  + ABrightWhite + " 0x" + pf + AReset + cr);
+  }
+  delay(100);
+  }while(KILLCYCLE==false);
+}
+
+
 /*
   Sets the hexadecimal value of a port.
 */
@@ -1106,6 +1126,12 @@ void TelGetPortHelp()
   telnet.println(_commandhelptitle);
   telnet.println(tab + ABrightRed + "getport" + ABrightWhite + tab + "- gets a port value of the port expander(A/B port).");
   telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "getport-" + AMagenta + "<a:b>" + AReset);
+}
+void TelReadPortHelp()
+{
+  telnet.println(_commandhelptitle);
+  telnet.println(tab + ABrightRed + "readport" + ABrightWhite + tab + "- cycle read, gets a port value of the port expander(A/B port).");
+  telnet.println(tab + ABrightGreen  + "usage:" + ABrightCyan + tab + "readport-" + AMagenta + "<a:b>" + AReset);
 }
 void TelSetPinHelp()
 {
@@ -1533,7 +1559,16 @@ void parseMainCommand(String command)
       TelGetPort(param);
     }
   }
+  else if (command.startsWith("readport")){
+    String param = command.substring(command.indexOf('-') + 1, command.length());
+    if (param == "?" || param == "help") {
+      TelReadPortHelp();
+    } else {
+      KILLCYCLE = false;
+      TelReadPort(param);
+    }
 
+  }
   else if (command.startsWith("resetports"))
   {
     String param = command.substring(command.indexOf('-') + 1, command.indexOf(',') - 1);
@@ -1609,7 +1644,16 @@ void parseSubCommand(String subcommand)
     {
     responsePrompt(1, 5, SubCommandLevel + 1); //unknown - system prompt
     }
-
+    // *************************************  parse control codes.  ********************************
+    if (subcommand.length() == 1){
+      String temp = subcommand;
+      if(temp == '\032'){
+        SubCommandLevel = 0;
+        isSubCommand = false;
+        KILLCYCLE = true;
+      }
+    }
+    // ***************  Handle quit command.  ******************************
     else if (subcommand.startsWith("quit") || subcommand == "q")
     {
       SubCommandLevel = 0;
@@ -1688,9 +1732,9 @@ void parseSubCommand(String subcommand)
   }
 }
 
-
+#pragma region ANSI TELNET
 /*
- * ********************************************************  TELNET SETUP & FUNCTIONS ****************************************************************************
+ * *********************************************  ANSI TELNET SETUP & FUNCTIONS *******************************************************
 */
 // callback functions for telnet events
 void OnTelnetConnect(String ip) {
@@ -1791,5 +1835,6 @@ void setupTelnet() {
     errorMsg("Reboot in 2 sec...");
   }
 }
+#pragma endregion ANSI TELNET
 
 #endif

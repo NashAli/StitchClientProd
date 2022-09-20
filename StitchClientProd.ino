@@ -59,7 +59,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
-#include <EEPROM.h>               //  manage the auto-l
+#include <EEPROM.h>               //  manage the auto-login credentials.
 #include "BluetoothSerial.h"      //  BT for login
 #include <NTPClient.h>            //  time server
 #include <time.h>                 //  standard time stuff
@@ -82,10 +82,9 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(ML_INTA, INPUT_PULLUP);
   scanI2CBus();
-  //initializeSensorGroup();
+  //initializeSensorGroup(); //leave group off(experimental)
   initializeMotorsPort();
   initializeControllerPort();
-  //initializeSensorGroup();
   setupTelnet();
   String logthis = ACyan + "System started@:" + AWhite + getASCIITime();
   logToSD(logthis);

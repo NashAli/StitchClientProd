@@ -751,7 +751,7 @@ void moveMotor(uint8_t axis, uint8_t steps, uint8_t dir)
   uint8_t setupvalue = ((axis | steps | dir) | 0b00000000);
   uint8_t cyclevalue = ((axis | steps | dir) | 0b00001000);
 
-  mcp.writeRegister(MCP23017Register::GPIO_B, setupvalue);      // send pre-step  AXIS STEP DIR - FWD STEP 1/4
+  mcp.writeRegister(MCP23017Register::GPIO_B, setupvalue);      // send pre-step  AXIS STEP DIR
   mcp.writeRegister(MCP23017Register::GPIO_B, cyclevalue);     // send post-step
   delayMicroseconds(2);                                   // step pulse width 1.9uSec (min. as per DRV8825 specs.)
   mcp.writeRegister(MCP23017Register::GPIO_B, setupvalue);      // send pre-step
@@ -819,13 +819,32 @@ void homeAll()
    Author:      zna
    Date:        01-22-22
    Version:     1.0.0
-   Description: Move the gantry to the specified position
+   Description: Move the gantry to the specified position in points.
    Input:
    Returns:
 */
 void gotoPoint(int xpos, int ypos)
 {
 
+}
+/*
+   Title:       GotoMM
+   Author:      zna
+   Date:        01-22-22
+   Version:     1.0.0
+   Description: Move the gantry to the specified position in mm.
+   Input:
+   Returns:
+*/
+void gotoMM(int xpos, int ypos)
+{
+  if(CalGood){
+    // goto to Absolute position in MM. 1 mm = (x/400)*step-value. Circumference = 12.7mm * pi.(39.898mm/rev.)
+    // @ 400steps/rev = (0.099745mm) ~1/10 mm per step.
+    // CalGood adds it's offset to the current values to get the correct position.
+  }else{
+    // no calibration data available, warn user. 
+  }
 }
 /*
    Title:       RunNeedleTest
